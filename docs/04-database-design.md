@@ -146,18 +146,13 @@ CREATE TABLE missions (
     deleted_at timestamptz NULL
 );
 
-CREATE TABLE projects (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    mission_id uuid NOT NULL REFERENCES missions(id),
-    title varchar(200) NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now(),
-    deleted_at timestamptz NULL
-);
+-- Project (a layer between Mission and Action) is deliberately not built in
+-- Phase 3 — see docs/03-domain-model.md "Phase 3 scope decision". Actions
+-- attach directly to a Mission instead.
 
 CREATE TABLE actions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id uuid NULL REFERENCES projects(id),
+    mission_id uuid NULL REFERENCES missions(id),
     dream_id uuid NOT NULL REFERENCES dreams(id),
     goal_id uuid NULL REFERENCES goals(id),
     title varchar(200) NOT NULL,

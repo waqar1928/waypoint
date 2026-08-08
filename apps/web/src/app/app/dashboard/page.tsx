@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, Compass, FlaskConical, ListChecks, Trophy } from "lucide-react";
+import { ArrowRight, Compass, FlaskConical, ListChecks } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClasses } from "@/components/ui/button";
 import { getProfile } from "@/lib/profile";
 import { getMyDream } from "@/lib/dream";
 import { getRecentJournalEntries } from "@/lib/journal";
+import { getMyPlan, getMyMilestones } from "@/lib/plan";
+import { getNextBestAction } from "@/lib/actions";
 import { JournalPanel } from "@/components/app/journal-panel";
+import { MilestonesPanel } from "@/components/app/milestones-panel";
 
 const arcStages = ["discover", "define", "validate", "plan", "act", "learn", "grow"] as const;
 const arcLabels: Record<(typeof arcStages)[number], string> = {
@@ -19,14 +22,18 @@ const arcLabels: Record<(typeof arcStages)[number], string> = {
 };
 
 export default async function DashboardPage() {
-  const [profile, dream, journalEntries] = await Promise.all([
+  const [profile, dream, journalEntries, plan, milestones, nextBestAction] = await Promise.all([
     getProfile(),
     getMyDream(),
     getRecentJournalEntries(),
+    getMyPlan(),
+    getMyMilestones(),
+    getNextBestAction(),
   ]);
 
   const firstName = profile?.displayName?.split(" ")[0] ?? "there";
   const currentStage = dream?.stage ?? "discover";
+  const mission = plan?.missions[0];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
@@ -39,15 +46,40 @@ export default async function DashboardPage() {
         <p className="text-xs font-semibold uppercase tracking-wide text-beacon-600">
           Next best action
         </p>
-        {dream ? (
+        {nextBestAction ? (
           <>
             <h2 className="mt-2 font-display text-xl font-semibold text-ink-900">
-              Keep building on &ldquo;{dream.title}&rdquo;
+              {nextBestAction.title}
             </h2>
+            {nextBestAction.description ? (
+              <p className="mt-1 text-sm text-ink-700">{nextBestAction.description}</p>
+            ) : null}
+            <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
+              Go to Actions
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </>
+        ) : dream && !plan ? (
+          <>
+            <h2 className="mt-2 font-display text-xl font-semibold text-ink-900">Draft your plan</h2>
             <p className="mt-1 text-sm text-ink-700">
-              Goals, missions, and actions arrive in a later phase — for now, use your journal to
-              capture what you&rsquo;re learning.
+              Turn &ldquo;{dream.title}&rdquo; into a 90-day mission you can actually start on.
             </p>
+            <Link href="/app/plan" className={buttonClasses("primary", "mt-4 gap-2")}>
+              Go to Plan
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </>
+        ) : dream && plan ? (
+          <>
+            <h2 className="mt-2 font-display text-xl font-semibold text-ink-900">Choose your next best action</h2>
+            <p className="mt-1 text-sm text-ink-700">
+              You have a plan — add an action and mark it as next so you always know what to do today.
+            </p>
+            <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
+              Go to Actions
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </>
         ) : (
           <>
@@ -81,20 +113,25 @@ export default async function DashboardPage() {
         ) : (
           <EmptyStateCard icon={Compass} title="Your Dream" description="You haven't started Dream Discovery yet." />
         )}
-        <EmptyStateCard
-          icon={ListChecks}
-          title="Current Mission"
-          description="Missions appear once Goals & Actions ship in a later phase."
-        />
+
+        {mission ? (
+          <Card>
+            <ListChecks className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+            <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Current Mission</h3>
+            <p className="mt-1 text-sm text-ink-700">{mission.title}</p>
+          </Card>
+        ) : (
+          <EmptyStateCard
+            icon={ListChecks}
+            title="Current Mission"
+            description="Missions appear once you draft your plan."
+          />
+        )}
+
         <EmptyStateCard
           icon={FlaskConical}
           title="Experiments"
           description="No experiments yet — the Experiment Lab opens in a later phase."
-        />
-        <EmptyStateCard
-          icon={Trophy}
-          title="Milestones"
-          description="Your milestones and achievements will show up here."
         />
       </div>
 
@@ -117,7 +154,8 @@ export default async function DashboardPage() {
         </ol>
       </Card>
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <MilestonesPanel initialMilestones={milestones} />
         <JournalPanel initialEntries={journalEntries} />
       </div>
     </div>

@@ -36,3 +36,17 @@ export const dreamStatementSchema = z.object({
   isBusinessShaped: z.boolean(),
 });
 export type DreamStatementInput = z.infer<typeof dreamStatementSchema>;
+
+export const createActionSchema = z.object({
+  title: z.string().min(1, "Give the action a title").max(200, "Keep the title under 200 characters"),
+  description: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  priority: z.enum(["low", "medium", "high"]),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  expectedImpact: z.enum(["low", "medium", "high"]),
+  /** Kept as a raw string from the number input — converted to a number at submit time, since
+   * react-hook-form's register() returns string values and mixing zod coercion here confused
+   * type inference for the resolver. */
+  estimatedMinutes: z.string().optional(),
+  dueDate: z.string().optional(),
+});
+export type CreateActionInput = z.infer<typeof createActionSchema>;

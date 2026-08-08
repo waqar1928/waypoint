@@ -130,7 +130,7 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
     private static string Trim(string? text)
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;
-        var t = text.Trim();
+        var t = text.Trim().TrimEnd('.', '!', '?');
         return t.Length > 140 ? t[..140].TrimEnd() + "…" : t;
     }
 }

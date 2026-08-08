@@ -35,3 +35,27 @@ public interface IStartupMigrator
 {
     Task MigrateAsync(CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Cross-module read contract owned by the Dreams module — the concrete
+/// example named in docs/03-domain-model.md "Module communication rules"
+/// (rule 2). Goals and Actions depend on this interface only, never on
+/// Dreams' Application layer or DbContext directly.
+/// </summary>
+public sealed record DreamSummary(
+    Guid DreamId,
+    Guid UserId,
+    string Title,
+    string Statement,
+    string? Purpose,
+    string? WhoItHelps,
+    string? Problem,
+    string? Outcome,
+    string? Motivation,
+    string? Impact,
+    bool IsBusinessShaped);
+
+public interface IDreamSummaryProvider
+{
+    Task<DreamSummary?> GetForUserAsync(Guid userId, CancellationToken cancellationToken);
+}

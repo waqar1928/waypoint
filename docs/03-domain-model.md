@@ -18,7 +18,7 @@ service later without a rewrite, if the domain ever justifies it.
 | **Identity** | Users, credentials, roles, sessions | 1 |
 | **Users** | Profile, preferences, notification/privacy settings | 1 |
 | **Dreams** | Dream, DreamStatement, Purpose, Obstacle | 2 |
-| **Goals** | Goal, Mission, Project, Milestone | 3 |
+| **Goals** | Goal, Mission, Milestone | 3 |
 | **Actions** | Action (task), Next Best Action selection | 3 |
 | **Experiments** | Experiment, ExperimentResult, hypothesis/learning loop | 4 |
 | **Journal** | JournalEntry, Reflection | 2 (private, ships alongside Dreams) |
@@ -30,6 +30,15 @@ service later without a rewrite, if the domain ever justifies it.
 | **Achievements** | Achievement, Momentum aggregation | 3–4 |
 | **Administration** | Admin views/actions across modules, RBAC enforcement | 8 |
 | **Audit** | AuditLog — cross-cutting, written to by every module | 1 |
+
+> **Phase 3 scope decision:** the original design sketched a 5-level
+> hierarchy (Dream → Goal → Mission → Project → Action). Phase 3 ships a
+> 4-level version — Actions attach directly to a Mission (and can also
+> attach directly to a Dream/Goal for quick capture without a Mission yet).
+> `Project` is left out of both the schema and the module for now rather
+> than built and left unused; it can be reintroduced as a real layer
+> between Mission and Action later if task volume within a single Mission
+> ever justifies it.
 
 ## Cross-cutting concerns
 
@@ -54,8 +63,8 @@ Dream 1───1 Purpose
 Dream 1───* Obstacle
 Dream 1───* Goal
 Goal 1───* Mission
-Mission 1───* Project
-Project 1───* Action
+Mission 1───* Action
+Dream 1───* Action
 Dream 1───* Milestone
 Dream 1───* Experiment
 Experiment 1───* ExperimentResult

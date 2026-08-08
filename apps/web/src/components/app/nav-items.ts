@@ -24,8 +24,8 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, available: true },
   { label: "Dream", href: "/app/dream", icon: Compass, available: true },
-  { label: "Plan", href: "/app/plan", icon: Map, available: false },
-  { label: "Actions", href: "/app/actions", icon: ListChecks, available: false },
+  { label: "Plan", href: "/app/plan", icon: Map, available: true },
+  { label: "Actions", href: "/app/actions", icon: ListChecks, available: true },
   { label: "Experiment Lab", href: "/app/experiments", icon: FlaskConical, available: false },
   { label: "Business Builder", href: "/app/business", icon: Building2, available: false },
   { label: "Waypoint Coach", href: "/app/coach", icon: MessageCircleQuestion, available: false },

@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<IDreamRepository, DreamRepository>();
         services.AddScoped<IStartupMigrator, DreamsStartupMigrator>();
+        services.AddScoped<IDreamSummaryProvider, DreamSummaryProvider>();
         services.AddSingleton<IDreamDirectionGenerator, HeuristicDreamDirectionGenerator>();
 
         return services;

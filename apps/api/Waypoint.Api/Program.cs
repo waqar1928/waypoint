@@ -5,11 +5,15 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
+using Waypoint.Actions.Api;
+using Waypoint.Actions.Infrastructure;
 using Waypoint.Api;
 using Waypoint.Audit.Infrastructure;
 using Waypoint.Common;
 using Waypoint.Dreams.Api;
 using Waypoint.Dreams.Infrastructure;
+using Waypoint.Goals.Api;
+using Waypoint.Goals.Infrastructure;
 using Waypoint.Identity.Api;
 using Waypoint.Identity.Infrastructure;
 using Waypoint.Journal.Api;
@@ -28,6 +32,8 @@ builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddDreamsModule(builder.Configuration);
 builder.Services.AddJournalModule(builder.Configuration);
+builder.Services.AddGoalsModule(builder.Configuration);
+builder.Services.AddActionsModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
 builder.Services.AddHttpContextAccessor();
@@ -44,6 +50,8 @@ var applicationAssemblies = new[]
     Assembly.Load("Waypoint.Users.Application"),
     Assembly.Load("Waypoint.Dreams.Application"),
     Assembly.Load("Waypoint.Journal.Application"),
+    Assembly.Load("Waypoint.Goals.Application"),
+    Assembly.Load("Waypoint.Actions.Application"),
 };
 
 builder.Services.AddMediatR(cfg =>
@@ -114,6 +122,8 @@ app.MapIdentityEndpoints();
 app.MapUsersEndpoints();
 app.MapDreamsEndpoints();
 app.MapJournalEndpoints();
+app.MapGoalsEndpoints();
+app.MapActionsEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
