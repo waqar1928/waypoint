@@ -11,6 +11,14 @@
     <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Api\Waypoint.Users.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Domain\Waypoint.Audit.Domain.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Infrastructure\Waypoint.Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Domain\Waypoint.Dreams.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Application\Waypoint.Dreams.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Infrastructure\Waypoint.Dreams.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Api\Waypoint.Dreams.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Journal\Waypoint.Journal.Domain\Waypoint.Journal.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Journal\Waypoint.Journal.Application\Waypoint.Journal.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Journal\Waypoint.Journal.Infrastructure\Waypoint.Journal.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Journal\Waypoint.Journal.Api\Waypoint.Journal.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

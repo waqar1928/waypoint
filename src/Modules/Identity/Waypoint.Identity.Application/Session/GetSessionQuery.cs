@@ -7,7 +7,8 @@ public sealed record SessionDto(Guid UserId, string Email, bool OnboardingComple
 
 public sealed record GetSessionQuery : IRequest<SessionDto?>;
 
-public sealed class GetSessionQueryHandler(ICurrentUserAccessor currentUser, IIdentityService identityService)
+public sealed class GetSessionQueryHandler(
+    ICurrentUserAccessor currentUser, IIdentityService identityService, IOnboardingStatusProvider onboardingStatus)
     : IRequestHandler<GetSessionQuery, SessionDto?>
 {
     public async Task<SessionDto?> Handle(GetSessionQuery request, CancellationToken cancellationToken)
@@ -18,6 +19,12 @@ public sealed class GetSessionQueryHandler(ICurrentUserAccessor currentUser, IId
         }
 
         var user = await identityService.FindByIdAsync(userId, cancellationToken);
-        return user is null ? null : new SessionDto(user.Id, user.Email, OnboardingCompleted: false);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var onboardingCompleted = await onboardingStatus.HasCompletedOnboardingAsync(userId, cancellationToken);
+        return new SessionDto(user.Id, user.Email, onboardingCompleted);
     }
 }

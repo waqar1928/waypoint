@@ -23,3 +23,16 @@ export const profileSchema = z.object({
   timeZone: z.string().min(1, "Select a time zone"),
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
+
+export const dreamStatementSchema = z.object({
+  title: z.string().min(1, "Give your dream a short title").max(200, "Keep the title under 200 characters"),
+  statement: z.string().min(1, "Write your dream statement").max(2000, "Keep this under 2000 characters"),
+  purpose: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  whoItHelps: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  problem: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  outcome: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  motivation: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  impact: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  isBusinessShaped: z.boolean(),
+});
+export type DreamStatementInput = z.infer<typeof dreamStatementSchema>;

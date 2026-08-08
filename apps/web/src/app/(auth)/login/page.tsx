@@ -34,7 +34,8 @@ export default function LoginPage() {
 
     if (response.ok) {
       invalidateCsrfToken();
-      router.push("/app/dashboard");
+      const session = (await response.json()) as { onboardingCompleted: boolean };
+      router.push(session.onboardingCompleted ? "/app/dashboard" : "/onboarding");
       return;
     }
 

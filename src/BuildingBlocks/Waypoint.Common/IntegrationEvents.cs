@@ -14,3 +14,6 @@ public sealed record UserRegisteredIntegrationEvent(Guid UserId, string DisplayN
 
 /// <summary>Published after Identity has removed the account, so other modules can purge their own data for that user.</summary>
 public sealed record UserDeletedIntegrationEvent(Guid UserId) : INotification;
+
+/// <summary>Published by Dreams when a user completes Discover/Define (their first Dream + Dream Statement is saved).</summary>
+public sealed record OnboardingCompletedIntegrationEvent(Guid UserId) : INotification;

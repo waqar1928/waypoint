@@ -8,8 +8,12 @@ using Serilog;
 using Waypoint.Api;
 using Waypoint.Audit.Infrastructure;
 using Waypoint.Common;
+using Waypoint.Dreams.Api;
+using Waypoint.Dreams.Infrastructure;
 using Waypoint.Identity.Api;
 using Waypoint.Identity.Infrastructure;
+using Waypoint.Journal.Api;
+using Waypoint.Journal.Infrastructure;
 using Waypoint.Users.Api;
 using Waypoint.Users.Infrastructure;
 
@@ -22,17 +26,24 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddAuditModule(builder.Configuration);
+builder.Services.AddDreamsModule(builder.Configuration);
+builder.Services.AddJournalModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase)));
 
 var applicationAssemblies = new[]
 {
     Assembly.Load("Waypoint.Identity.Application"),
     Assembly.Load("Waypoint.Users.Application"),
+    Assembly.Load("Waypoint.Dreams.Application"),
+    Assembly.Load("Waypoint.Journal.Application"),
 };
 
 builder.Services.AddMediatR(cfg =>
@@ -101,6 +112,8 @@ app.UseAuthorization();
 app.MapAntiforgeryEndpoints();
 app.MapIdentityEndpoints();
 app.MapUsersEndpoints();
+app.MapDreamsEndpoints();
+app.MapJournalEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });

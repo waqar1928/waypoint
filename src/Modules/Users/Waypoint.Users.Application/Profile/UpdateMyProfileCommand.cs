@@ -54,7 +54,6 @@ public sealed class UpdateMyProfileCommandHandler(IUsersRepository repository, I
         profile.Bio = request.Bio;
         profile.TimeZone = request.TimeZone;
         profile.UpdatedBy = userId;
-        profile.UpdatedAt = DateTimeOffset.UtcNow;
 
         await repository.SaveProfileAsync(profile, cancellationToken);
 

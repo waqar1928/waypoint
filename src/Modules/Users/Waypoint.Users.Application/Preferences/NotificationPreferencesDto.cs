@@ -42,7 +42,6 @@ public sealed class UpdateNotificationPreferencesCommandHandler(
         prefs.EmailCoachNudges = request.EmailCoachNudges;
         prefs.EmailCommunityActivity = request.EmailCommunityActivity;
         prefs.UpdatedBy = userId;
-        prefs.UpdatedAt = DateTimeOffset.UtcNow;
 
         await repository.SaveNotificationPreferencesAsync(prefs, cancellationToken);
 

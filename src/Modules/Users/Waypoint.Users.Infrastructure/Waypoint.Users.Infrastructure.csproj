@@ -4,6 +4,8 @@
     <ProjectReference Include="..\Waypoint.Users.Application\Waypoint.Users.Application.csproj" />
     <ProjectReference Include="..\Waypoint.Users.Domain\Waypoint.Users.Domain.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Waypoint.Common\Waypoint.Common.csproj" />
+    <ProjectReference Include="..\..\Identity\Waypoint.Identity.Application\Waypoint.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Waypoint.Common.Infrastructure\Waypoint.Common.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

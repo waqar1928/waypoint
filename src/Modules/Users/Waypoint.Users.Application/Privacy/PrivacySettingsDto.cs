@@ -47,7 +47,6 @@ public sealed class UpdatePrivacySettingsCommandHandler(IUsersRepository reposit
         settings.ProfileVisibility = request.ProfileVisibility;
         settings.DreamVisibility = request.DreamVisibility;
         settings.UpdatedBy = userId;
-        settings.UpdatedAt = DateTimeOffset.UtcNow;
 
         await repository.SavePrivacySettingsAsync(settings, cancellationToken);
 
