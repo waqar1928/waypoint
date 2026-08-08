@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: waypoint
+      POSTGRES_USER: waypoint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waypoint_dev_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - waypoint_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waypoint -d waypoint"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Waypoint.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=waypoint;Username=waypoint;Password=${POSTGRES_PASSWORD:-waypoint_dev_password}"
+      Waypoint__WebAppBaseUrl: ${WEB_APP_BASE_URL:-http://localhost:3030}
+      Waypoint__AutoMigrate: "true"
+    ports:
+      - "5080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: apps/web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8080
+    ports:
+      - "3030:3000"
+    depends_on:
+      - api
+
+volumes:
+  waypoint_postgres_data:

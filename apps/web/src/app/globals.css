@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --color-paper: #faf8f4;
+  --color-paper-raised: #ffffff;
+  --color-ink-900: #12172b;
+  --color-ink-700: #3a4256;
+  --color-ink-500: #6b7280;
+  --color-ink-300: #d8dae3;
+  --color-ink-100: #eeeff3;
+  --color-beacon-600: #d9552e;
+  --color-beacon-500: #e8623d;
+  --color-beacon-100: #fbe3d8;
+  --color-sage-600: #3f6349;
+  --color-sage-100: #e4ede6;
+  --color-amber-600: #a66b1f;
+  --color-amber-100: #f5e7cf;
+  --color-merlot-600: #7a2a34;
+  --color-merlot-100: #f2ded0;
+  --color-chart-900: #0d1226;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-raised: var(--color-paper-raised);
+  --color-ink-900: var(--color-ink-900);
+  --color-ink-700: var(--color-ink-700);
+  --color-ink-500: var(--color-ink-500);
+  --color-ink-300: var(--color-ink-300);
+  --color-ink-100: var(--color-ink-100);
+  --color-beacon-600: var(--color-beacon-600);
+  --color-beacon-500: var(--color-beacon-500);
+  --color-beacon-100: var(--color-beacon-100);
+  --color-sage-600: var(--color-sage-600);
+  --color-sage-100: var(--color-sage-100);
+  --color-amber-600: var(--color-amber-600);
+  --color-amber-100: var(--color-amber-100);
+  --color-merlot-600: var(--color-merlot-600);
+  --color-merlot-100: var(--color-merlot-100);
+  --color-chart-900: var(--color-chart-900);
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-beacon-500);
+  outline-offset: 2px;
+}

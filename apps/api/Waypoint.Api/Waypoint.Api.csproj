@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\Waypoint.Common\Waypoint.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\Waypoint.Identity.Application\Waypoint.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\Waypoint.Identity.Infrastructure\Waypoint.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\Waypoint.Identity.Api\Waypoint.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Domain\Waypoint.Users.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Application\Waypoint.Users.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Infrastructure\Waypoint.Users.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Api\Waypoint.Users.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Domain\Waypoint.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Infrastructure\Waypoint.Audit.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
