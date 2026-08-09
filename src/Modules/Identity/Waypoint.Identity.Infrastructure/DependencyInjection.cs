@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IEmailSender, LoggingEmailSender>();
         services.AddScoped<IStartupMigrator, IdentityStartupMigrator>();
+        services.AddScoped<IStartupMigrator, AdminRoleSeeder>();
 
         return services;
     }

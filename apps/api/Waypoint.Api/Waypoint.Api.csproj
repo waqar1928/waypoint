@@ -10,7 +10,9 @@
     <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Infrastructure\Waypoint.Users.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Users\Waypoint.Users.Api\Waypoint.Users.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Domain\Waypoint.Audit.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Application\Waypoint.Audit.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Infrastructure\Waypoint.Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Api\Waypoint.Audit.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Domain\Waypoint.Dreams.Domain.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Application\Waypoint.Dreams.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Infrastructure\Waypoint.Dreams.Infrastructure.csproj" />
@@ -35,6 +37,18 @@
     <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Application\Waypoint.BusinessIdeas.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Infrastructure\Waypoint.BusinessIdeas.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Api\Waypoint.BusinessIdeas.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\AI\Waypoint.AI.Domain\Waypoint.AI.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\AI\Waypoint.AI.Application\Waypoint.AI.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\AI\Waypoint.AI.Infrastructure\Waypoint.AI.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\AI\Waypoint.AI.Api\Waypoint.AI.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Community\Waypoint.Community.Domain\Waypoint.Community.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Community\Waypoint.Community.Application\Waypoint.Community.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Community\Waypoint.Community.Infrastructure\Waypoint.Community.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Community\Waypoint.Community.Api\Waypoint.Community.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Mentorship\Waypoint.Mentorship.Domain\Waypoint.Mentorship.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Mentorship\Waypoint.Mentorship.Application\Waypoint.Mentorship.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Mentorship\Waypoint.Mentorship.Infrastructure\Waypoint.Mentorship.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Mentorship\Waypoint.Mentorship.Api\Waypoint.Mentorship.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

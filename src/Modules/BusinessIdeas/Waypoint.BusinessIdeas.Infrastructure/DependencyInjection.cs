@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IBusinessIdeasRepository, BusinessIdeasRepository>();
         services.AddScoped<IStartupMigrator, BusinessIdeasStartupMigrator>();
         services.AddSingleton<IViabilityEstimateGenerator, HeuristicViabilityEstimateGenerator>();
+        services.AddScoped<IBusinessIdeaSummaryProvider, BusinessIdeaSummaryProvider>();
 
         return services;
     }

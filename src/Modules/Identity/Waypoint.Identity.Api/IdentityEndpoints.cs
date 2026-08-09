@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Waypoint.Identity.Application.Admin.GetAllUsers;
+using Waypoint.Identity.Application.Admin.LockUser;
+using Waypoint.Identity.Application.Admin.UnlockUser;
 using Waypoint.Identity.Application.DeleteAccount;
 using Waypoint.Identity.Application.ForgotPassword;
 using Waypoint.Identity.Application.Login;
@@ -72,6 +75,26 @@ public static class IdentityEndpoints
             .RequireAuthorization()
             .RequireRateLimiting("api")
             .WithTags("Account");
+
+        var admin = app.MapGroup("/api/v1/admin/users")
+            .RequireAuthorization("Admin")
+            .RequireRateLimiting("api")
+            .WithTags("Admin");
+
+        admin.MapGet("/", async (ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new GetAllUsersQuery(), ct)));
+
+        admin.MapPost("/{userId:guid}/lock", async (Guid userId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new LockUserCommand(userId), ct);
+            return Results.NoContent();
+        });
+
+        admin.MapPost("/{userId:guid}/unlock", async (Guid userId, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new UnlockUserCommand(userId), ct);
+            return Results.NoContent();
+        });
 
         return app;
     }

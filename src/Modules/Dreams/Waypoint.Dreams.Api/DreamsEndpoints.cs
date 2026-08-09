@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Waypoint.Dreams.Application;
+using Waypoint.Dreams.Application.Admin.GetAllDreams;
 using Waypoint.Dreams.Application.GenerateDreamDirections;
 using Waypoint.Dreams.Application.GetMyDream;
 using Waypoint.Dreams.Application.SelectDreamDirection;
@@ -31,6 +32,13 @@ public static class DreamsEndpoints
 
         group.MapPut("/me", async (UpdateDreamStatementCommand command, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(command, ct)));
+
+        app.MapGroup("/api/v1/admin/dreams")
+            .RequireAuthorization("Admin")
+            .RequireRateLimiting("api")
+            .WithTags("Admin")
+            .MapGet("/", async (ISender sender, CancellationToken ct) =>
+                Results.Ok(await sender.Send(new GetAllDreamsQuery(), ct)));
 
         return app;
     }

@@ -11,6 +11,8 @@ import {
   BookOpen,
   History,
   Settings,
+  Users,
+  HeartHandshake,
 } from "lucide-react";
 
 export interface NavItem {
@@ -28,7 +30,9 @@ export const navItems: NavItem[] = [
   { label: "Actions", href: "/app/actions", icon: ListChecks, available: true },
   { label: "Experiment Lab", href: "/app/experiments", icon: FlaskConical, available: true },
   { label: "Business Builder", href: "/app/business", icon: Building2, available: true },
-  { label: "Waypoint Coach", href: "/app/coach", icon: MessageCircleQuestion, available: false },
+  { label: "Waypoint Coach", href: "/app/coach", icon: MessageCircleQuestion, available: true },
+  { label: "Community", href: "/app/community", icon: Users, available: true },
+  { label: "Mentorship", href: "/app/mentorship", icon: HeartHandshake, available: true },
   { label: "Idea Studio", href: "/app/ideas", icon: Lightbulb, available: false },
   { label: "Journal", href: "/app/journal", icon: BookOpen, available: false },
   { label: "Timeline", href: "/app/timeline", icon: History, available: false },

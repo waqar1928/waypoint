@@ -15,4 +15,6 @@ public sealed class HttpContextCurrentUserAccessor(IHttpContextAccessor httpCont
     }
 
     public string? Email => httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
+
+    public bool IsInRole(string role) => httpContextAccessor.HttpContext?.User.IsInRole(role) ?? false;
 }

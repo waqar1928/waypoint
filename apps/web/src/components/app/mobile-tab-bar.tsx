@@ -12,7 +12,7 @@ export function MobileTabBar() {
   return (
     <nav
       aria-label="Waypoint"
-      className="fixed inset-x-0 bottom-0 z-10 flex border-t border-ink-300 bg-paper-raised md:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 flex overflow-x-auto border-t border-ink-300 bg-paper-raised md:hidden"
     >
       {items.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -22,7 +22,7 @@ export function MobileTabBar() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={clsx(
-              "flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium",
+              "flex min-w-[74px] shrink-0 flex-col items-center gap-1 px-1 py-3 text-center text-xs font-medium",
               isActive ? "text-beacon-600" : "text-ink-500",
             )}
           >

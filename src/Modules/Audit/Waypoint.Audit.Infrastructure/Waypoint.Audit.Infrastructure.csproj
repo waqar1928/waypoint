@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Waypoint.Audit.Domain\Waypoint.Audit.Domain.csproj" />
+    <ProjectReference Include="..\Waypoint.Audit.Application\Waypoint.Audit.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Waypoint.Common\Waypoint.Common.csproj" />
   </ItemGroup>
 

@@ -82,3 +82,41 @@ export const businessIdeaSchema = z.object({
   risks: z.string().max(5000, "Keep this under 5000 characters").optional(),
 });
 export type BusinessIdeaInput = z.infer<typeof businessIdeaSchema>;
+
+export const createPostSchema = z.object({
+  body: z.string().min(1, "Say something").max(2000, "Keep this under 2000 characters"),
+  visibility: z.enum(["private", "community", "public"]),
+});
+export type CreatePostInput = z.infer<typeof createPostSchema>;
+
+export const createCommentSchema = z.object({
+  body: z.string().min(1, "Write a comment").max(1000, "Keep this under 1000 characters"),
+});
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+
+export const reportContentSchema = z.object({
+  reason: z.enum(["spam", "harassment", "other"]),
+  details: z.string().max(1000, "Keep this under 1000 characters").optional(),
+});
+export type ReportContentInput = z.infer<typeof reportContentSchema>;
+
+export const becomeMentorSchema = z.object({
+  expertise: z.string().min(1, "List at least one area of expertise"),
+  yearsExperience: z.string().optional(),
+  availability: z.string().max(50, "Keep this under 50 characters").optional(),
+});
+export type BecomeMentorInput = z.infer<typeof becomeMentorSchema>;
+
+export const createHelpRequestSchema = z.object({
+  category: z.enum([
+    "business", "marketing", "technology", "finance", "sales", "design", "career", "operations", "leadership",
+  ]),
+  title: z.string().min(1, "Give this a title").max(200, "Keep the title under 200 characters"),
+  body: z.string().min(1, "Describe what you need help with").max(2000, "Keep this under 2000 characters"),
+});
+export type CreateHelpRequestInput = z.infer<typeof createHelpRequestSchema>;
+
+export const respondToHelpRequestSchema = z.object({
+  body: z.string().min(1, "Write a response").max(2000, "Keep this under 2000 characters"),
+});
+export type RespondToHelpRequestInput = z.infer<typeof respondToHelpRequestSchema>;

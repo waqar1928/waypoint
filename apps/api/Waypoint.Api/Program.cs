@@ -7,11 +7,16 @@ using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using Waypoint.Actions.Api;
 using Waypoint.Actions.Infrastructure;
+using Waypoint.AI.Api;
+using Waypoint.AI.Infrastructure;
 using Waypoint.Api;
+using Waypoint.Audit.Api;
 using Waypoint.Audit.Infrastructure;
 using Waypoint.BusinessIdeas.Api;
 using Waypoint.BusinessIdeas.Infrastructure;
 using Waypoint.Common;
+using Waypoint.Community.Api;
+using Waypoint.Community.Infrastructure;
 using Waypoint.Dreams.Api;
 using Waypoint.Dreams.Infrastructure;
 using Waypoint.Experiments.Api;
@@ -22,6 +27,8 @@ using Waypoint.Identity.Api;
 using Waypoint.Identity.Infrastructure;
 using Waypoint.Journal.Api;
 using Waypoint.Journal.Infrastructure;
+using Waypoint.Mentorship.Api;
+using Waypoint.Mentorship.Infrastructure;
 using Waypoint.Users.Api;
 using Waypoint.Users.Infrastructure;
 
@@ -40,6 +47,9 @@ builder.Services.AddGoalsModule(builder.Configuration);
 builder.Services.AddActionsModule(builder.Configuration);
 builder.Services.AddExperimentsModule(builder.Configuration);
 builder.Services.AddBusinessIdeasModule(builder.Configuration);
+builder.Services.AddAiModule(builder.Configuration);
+builder.Services.AddCommunityModule(builder.Configuration);
+builder.Services.AddMentorshipModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
 builder.Services.AddHttpContextAccessor();
@@ -54,12 +64,16 @@ var applicationAssemblies = new[]
 {
     Assembly.Load("Waypoint.Identity.Application"),
     Assembly.Load("Waypoint.Users.Application"),
+    Assembly.Load("Waypoint.Audit.Application"),
     Assembly.Load("Waypoint.Dreams.Application"),
     Assembly.Load("Waypoint.Journal.Application"),
     Assembly.Load("Waypoint.Goals.Application"),
     Assembly.Load("Waypoint.Actions.Application"),
     Assembly.Load("Waypoint.Experiments.Application"),
     Assembly.Load("Waypoint.BusinessIdeas.Application"),
+    Assembly.Load("Waypoint.AI.Application"),
+    Assembly.Load("Waypoint.Community.Application"),
+    Assembly.Load("Waypoint.Mentorship.Application"),
 };
 
 builder.Services.AddMediatR(cfg =>
@@ -69,7 +83,8 @@ builder.Services.AddMediatR(cfg =>
 });
 builder.Services.AddValidatorsFromAssemblies(applicationAssemblies);
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy("Admin", policy => policy.RequireRole(Waypoint.Common.Roles.Admin)));
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -110,6 +125,16 @@ builder.Services.AddRateLimiter(options =>
             PermitLimit = 100,
             QueueLimit = 0,
         }));
+
+    // Stricter than "api" — every request here is a billed AI call, not just a DB read/write.
+    options.AddPolicy("ai", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            Window = TimeSpan.FromMinutes(1),
+            PermitLimit = 20,
+            QueueLimit = 0,
+        }));
 });
 
 builder.Services.AddHealthChecks()
@@ -134,6 +159,10 @@ app.MapGoalsEndpoints();
 app.MapActionsEndpoints();
 app.MapExperimentsEndpoints();
 app.MapBusinessIdeasEndpoints();
+app.MapAiEndpoints();
+app.MapCommunityEndpoints();
+app.MapMentorshipEndpoints();
+app.MapAuditEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });

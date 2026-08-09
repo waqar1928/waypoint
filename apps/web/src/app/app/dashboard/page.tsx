@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, Compass, FlaskConical, ListChecks } from "lucide-react";
+import { ArrowRight, Building2, Compass, FlaskConical, ListChecks, MessageCircleQuestion, Users, HeartHandshake } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClasses } from "@/components/ui/button";
 import { getProfile } from "@/lib/profile";
@@ -9,6 +9,9 @@ import { getMyPlan, getMyMilestones } from "@/lib/plan";
 import { getNextBestAction } from "@/lib/actions";
 import { getMyExperiments } from "@/lib/experiments";
 import { getMyBusinessValidations } from "@/lib/business";
+import { getMyConversations } from "@/lib/coach";
+import { getMyPosts } from "@/lib/community";
+import { getMyHelpRequests } from "@/lib/mentorship";
 import { JournalPanel } from "@/components/app/journal-panel";
 import { MilestonesPanel } from "@/components/app/milestones-panel";
 
@@ -24,17 +27,22 @@ const arcLabels: Record<(typeof arcStages)[number], string> = {
 };
 
 export default async function DashboardPage() {
-  const [profile, dream, journalEntries, plan, milestones, nextBestAction, experiments, businessValidations] =
-    await Promise.all([
-      getProfile(),
-      getMyDream(),
-      getRecentJournalEntries(),
-      getMyPlan(),
-      getMyMilestones(),
-      getNextBestAction(),
-      getMyExperiments(),
-      getMyBusinessValidations(),
-    ]);
+  const [
+    profile, dream, journalEntries, plan, milestones, nextBestAction, experiments,
+    businessValidations, conversations, myPosts, myHelpRequests,
+  ] = await Promise.all([
+    getProfile(),
+    getMyDream(),
+    getRecentJournalEntries(),
+    getMyPlan(),
+    getMyMilestones(),
+    getNextBestAction(),
+    getMyExperiments(),
+    getMyBusinessValidations(),
+    getMyConversations(),
+    getMyPosts(),
+    getMyHelpRequests(),
+  ]);
   const latestViability = businessValidations[0] ?? null;
 
   const firstName = profile?.displayName?.split(" ")[0] ?? "there";
@@ -173,6 +181,45 @@ export default async function DashboardPage() {
             </Link>
           </Card>
         ) : null}
+
+        <Card>
+          <MessageCircleQuestion className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+          <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Waypoint Coach</h3>
+          <p className="mt-1 text-sm text-ink-700">
+            {conversations.length > 0
+              ? `${conversations.length} ${conversations.length === 1 ? "conversation" : "conversations"} so far.`
+              : "A collaborative guide, not a verdict — talk through your dream anytime."}
+          </p>
+          <Link href="/app/coach" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+            Talk to Coach
+          </Link>
+        </Card>
+
+        <Card>
+          <Users className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+          <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Community</h3>
+          <p className="mt-1 text-sm text-ink-700">
+            {myPosts.length > 0
+              ? `${myPosts.length} ${myPosts.length === 1 ? "post" : "posts"} shared so far.`
+              : "An opt-in space to share progress with other Waypoint members."}
+          </p>
+          <Link href="/app/community" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+            Go to Community
+          </Link>
+        </Card>
+
+        <Card>
+          <HeartHandshake className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+          <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Mentorship</h3>
+          <p className="mt-1 text-sm text-ink-700">
+            {myHelpRequests.length > 0
+              ? `${myHelpRequests.filter((r) => r.status !== "closed").length} open help ${myHelpRequests.filter((r) => r.status !== "closed").length === 1 ? "request" : "requests"}.`
+              : "Ask for help, or opt in to give it."}
+          </p>
+          <Link href="/app/mentorship" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+            Go to Mentorship
+          </Link>
+        </Card>
       </div>
 
       <Card className="mt-6">

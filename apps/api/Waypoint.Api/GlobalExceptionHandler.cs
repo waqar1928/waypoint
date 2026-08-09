@@ -61,6 +61,13 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 Title = "Invalid or missing CSRF token",
                 Status = StatusCodes.Status403Forbidden,
             },
+            AiServiceUnavailableException aiUnavailable => new ProblemDetails
+            {
+                Type = "https://waypoint.app/errors/ai-service-unavailable",
+                Title = "Waypoint Coach is unavailable",
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Detail = aiUnavailable.Message,
+            },
             _ => null,
         };
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Waypoint.Identity.Application;
 
 namespace Waypoint.Identity.Infrastructure;
@@ -113,6 +114,46 @@ public sealed class IdentityService(
         }
 
         var result = await userManager.DeleteAsync(user);
+        return result.Succeeded
+            ? IdentityOperationResult.Success()
+            : IdentityOperationResult.Failure(result.Errors.Select(e => e.Description));
+    }
+
+    public async Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(CancellationToken cancellationToken)
+    {
+        var users = await userManager.Users.OrderBy(u => u.Email).ToListAsync(cancellationToken);
+        var results = new List<AdminUserLookup>(users.Count);
+        foreach (var user in users)
+        {
+            var isLockedOut = await userManager.IsLockedOutAsync(user);
+            results.Add(new AdminUserLookup(user.Id, user.Email!, user.EmailConfirmed, isLockedOut, user.LockoutEnd));
+        }
+        return results;
+    }
+
+    public async Task<IdentityOperationResult> LockUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return IdentityOperationResult.Failure(["User not found."]);
+        }
+
+        var result = await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+        return result.Succeeded
+            ? IdentityOperationResult.Success()
+            : IdentityOperationResult.Failure(result.Errors.Select(e => e.Description));
+    }
+
+    public async Task<IdentityOperationResult> UnlockUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return IdentityOperationResult.Failure(["User not found."]);
+        }
+
+        var result = await userManager.SetLockoutEndDateAsync(user, null);
         return result.Succeeded
             ? IdentityOperationResult.Success()
             : IdentityOperationResult.Failure(result.Errors.Select(e => e.Description));

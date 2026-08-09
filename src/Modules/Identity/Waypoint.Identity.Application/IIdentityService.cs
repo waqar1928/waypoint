@@ -8,6 +8,9 @@ public sealed record IdentityOperationResult(bool Succeeded, IReadOnlyList<strin
 
 public sealed record UserLookup(Guid Id, string Email, bool EmailConfirmed);
 
+/// <summary>Admin-only user listing (Phase 8) — includes lockout state, which UserLookup doesn't expose.</summary>
+public sealed record AdminUserLookup(Guid Id, string Email, bool EmailConfirmed, bool IsLockedOut, DateTimeOffset? LockoutEnd);
+
 public enum SignInOutcome
 {
     Success,
@@ -48,6 +51,17 @@ public interface IIdentityService
     Task<bool> CheckPasswordAsync(Guid userId, string password, CancellationToken cancellationToken);
 
     Task<IdentityOperationResult> DeleteUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>Admin-only (Phase 8) — every account, most recently created first isn't tracked
+    /// (ApplicationUser has no CreatedAt), so this is ordered by email for stable pagination-free display.</summary>
+    Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(CancellationToken cancellationToken);
+
+    /// <summary>Locks the account indefinitely (DateTimeOffset.MaxValue) using ASP.NET Core
+    /// Identity's existing lockout mechanism — the same one that already locks an account out
+    /// after repeated failed logins, just applied deliberately by an admin.</summary>
+    Task<IdentityOperationResult> LockUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<IdentityOperationResult> UnlockUserAsync(Guid userId, CancellationToken cancellationToken);
 }
 
 public interface IEmailSender

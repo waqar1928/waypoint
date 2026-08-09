@@ -5,6 +5,7 @@ export interface Session {
   userId: string;
   email: string;
   onboardingCompleted: boolean;
+  isAdmin: boolean;
 }
 
 /** Server-side session lookup — reads the forwarded session cookie and asks the API directly. */

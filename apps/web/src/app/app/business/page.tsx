@@ -37,11 +37,20 @@ export default async function BusinessPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
-      <h1 className="font-display text-3xl font-semibold text-ink-900">Business Builder</h1>
-      <p className="mt-2 text-ink-700">
-        Build out and stress-test the business version of &ldquo;{dream.title}&rdquo;. Fill in what you know —
-        everything here is optional and editable any time.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-semibold text-ink-900">Business Builder</h1>
+          <p className="mt-2 text-ink-700">
+            Build out and stress-test the business version of &ldquo;{dream.title}&rdquo;. Fill in what you know —
+            everything here is optional and editable any time.
+          </p>
+        </div>
+        {idea ? (
+          <Link href="/app/coach?start=challengeMyIdea" className={buttonClasses("secondary", "shrink-0")}>
+            Challenge my idea
+          </Link>
+        ) : null}
+      </div>
       <div className="mt-8">
         <BusinessBuilderWorkspace initialIdea={idea} initialValidations={validations} />
       </div>

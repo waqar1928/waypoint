@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Waypoint.Audit.Application;
 using Waypoint.Common;
 
 namespace Waypoint.Audit.Infrastructure;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddDbContext<AuditDbContext>(options =>
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
         services.AddScoped<IAuditSink, AuditSink>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IStartupMigrator, AuditStartupMigrator>();
 
         return services;

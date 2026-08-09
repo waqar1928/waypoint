@@ -3,7 +3,7 @@ using Waypoint.Common;
 
 namespace Waypoint.Identity.Application.Session;
 
-public sealed record SessionDto(Guid UserId, string Email, bool OnboardingCompleted);
+public sealed record SessionDto(Guid UserId, string Email, bool OnboardingCompleted, bool IsAdmin);
 
 public sealed record GetSessionQuery : IRequest<SessionDto?>;
 
@@ -25,6 +25,6 @@ public sealed class GetSessionQueryHandler(
         }
 
         var onboardingCompleted = await onboardingStatus.HasCompletedOnboardingAsync(userId, cancellationToken);
-        return new SessionDto(user.Id, user.Email, onboardingCompleted);
+        return new SessionDto(user.Id, user.Email, onboardingCompleted, currentUser.IsInRole(Roles.Admin));
     }
 }

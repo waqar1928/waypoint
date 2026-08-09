@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IUsersRepository, UsersRepository>();
         services.AddScoped<IStartupMigrator, UsersStartupMigrator>();
         services.AddScoped<IOnboardingStatusProvider, OnboardingStatusProvider>();
+        services.AddScoped<IProfileSummaryProvider, ProfileSummaryProvider>();
 
         return services;
     }
