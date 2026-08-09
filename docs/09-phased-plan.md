@@ -18,7 +18,7 @@ marked done on a claim alone.
 | 9. Security hardening | Full OWASP pass, pen-test-style review, rate limit tuning | **First formal pass done** — see `docs/10-security-audit-phase9.md` |
 | 10. Performance optimization | Core Web Vitals, query tuning, caching, code splitting | **First formal pass done** — see `docs/11-performance-audit-phase10.md` |
 | 11. Testing | Full unit/integration/API/frontend/E2E coverage pass | **First formal pass done** — see `docs/12-testing-audit-phase11.md` |
-| 12. Production deployment | CI/CD, environment hardening, observability rollout | Not started |
+| 12. Production deployment | CI/CD, environment hardening, observability rollout | **First formal pass done** (CI/CD, hardening, logging) — Dockerfiles + live deploy intentionally deferred, see `docs/13-production-readiness-phase12.md` |
 
 ## Phase 1 exit criteria (this build)
 

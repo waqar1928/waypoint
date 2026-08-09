@@ -35,7 +35,27 @@ using Waypoint.Users.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+        .Enrich.WithProperty("Application", "Waypoint.Api");
+
+    // Plain text in dev (readable at a terminal while iterating); structured JSON
+    // (CLEF/compact) everywhere else, since that's what a real log aggregator (CloudWatch,
+    // Datadog, Grafana Loki, etc.) needs to index and query fields instead of grepping text.
+    // appsettings.json's Serilog:WriteTo still controls sinks/levels — this only controls how
+    // the console sink renders each event, and only for the console sink specifically.
+    if (context.HostingEnvironment.IsDevelopment())
+    {
+        configuration.WriteTo.Console();
+    }
+    else
+    {
+        configuration.WriteTo.Console(new Serilog.Formatting.Compact.CompactJsonFormatter());
+    }
+});
 
 // ---- Modules ---------------------------------------------------------
 builder.Services.AddIdentityModule(builder.Configuration);

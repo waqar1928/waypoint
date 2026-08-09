@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (build, unit tests, integration tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore
+        run: dotnet restore Waypoint.sln
+
+      - name: Build
+        run: dotnet build Waypoint.sln --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test Waypoint.sln --no-build --configuration Release --filter "FullyQualifiedName!~IntegrationTests"
+
+      # GitHub-hosted ubuntu-latest runners have Docker pre-installed, so
+      # WaypointApiFactory's Testcontainers path runs here even though it can't in a
+      # sandbox without Docker (see tests/Waypoint.Api.IntegrationTests/WaypointApiFactory.cs
+      # for the local-Postgres fallback used in that case).
+      - name: Run integration tests
+        run: dotnet test tests/Waypoint.Api.IntegrationTests --no-build --configuration Release
+
+  frontend:
+    name: Frontend (lint, unit tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
