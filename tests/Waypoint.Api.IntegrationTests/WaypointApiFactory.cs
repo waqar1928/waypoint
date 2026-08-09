@@ -16,12 +16,21 @@ namespace Waypoint.Api.IntegrationTests;
 /// Tries Testcontainers first (a throwaway Postgres container per test run) since
 /// that's the more hermetic, CI-friendly option. Falls back to a scratch database on
 /// whatever local Postgres server the rest of this project's live verification
-/// already uses (see apps/api/Waypoint.Api/appsettings.json) when no Docker daemon is
-/// available — which is the normal case for local development environments that
+/// already uses (see apps/api/Waypoint.Api/appsettings.json) when Testcontainers
+/// isn't usable — which is the normal case for local development environments that
 /// don't happen to have Docker installed. The fallback creates
 /// "waypoint_integration_test" fresh (drop-if-exists, then create) before each test
 /// run and drops it again on disposal, so it never touches the "waypoint" dev
 /// database used for manual verification.
+///
+/// Both candidates are actively connection-tested here, before this method returns —
+/// not assumed to work just because container startup or database creation didn't
+/// throw. The first real bug this whole fallback design ever hit (Phase 12) was
+/// exactly this gap: Testcontainers failed silently in a way this class swallowed,
+/// fell back to a hardcoded "localhost:5432" that's only valid in the sandbox this
+/// project's live verification runs in, and the resulting connection failure didn't
+/// surface until deep inside Program.cs's migration code on a completely unrelated
+/// stack trace — instead of a clear, actionable error right here.
 /// </summary>
 public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -47,6 +56,33 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public async Task InitializeAsync()
     {
+        var containerFailure = await TryInitializeContainerAsync();
+        if (containerFailure is null)
+        {
+            return;
+        }
+
+        Console.Error.WriteLine(
+            $"[WaypointApiFactory] Testcontainers unavailable or unreachable ({containerFailure}) — " +
+            $"falling back to local Postgres database '{LocalTestDatabaseName}'.");
+
+        var localFailure = await TryInitializeLocalFallbackAsync();
+        if (localFailure is null)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "WaypointApiFactory could not reach a Postgres instance to run integration tests against. " +
+            $"Testcontainers attempt failed: {containerFailure}. " +
+            $"Local Postgres fallback (host=localhost, port=5432) also failed: {localFailure}. " +
+            "Either make a Docker daemon available (Testcontainers) or run a local Postgres server " +
+            "matching apps/api/Waypoint.Api/appsettings.json's dev credentials.");
+    }
+
+    /// <returns>null on success; a diagnostic message on failure (never throws).</returns>
+    private async Task<string?> TryInitializeContainerAsync()
+    {
         try
         {
             // Building the container (not just starting it) is what actually talks to the Docker
@@ -60,19 +96,47 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
                 .Build();
 
             await container.StartAsync();
+            var connectionString = container.GetConnectionString();
+
+            // Don't trust "StartAsync didn't throw" as proof the container is actually reachable —
+            // confirm with a real connection before committing to this as the test database.
+            await using (var probe = new NpgsqlConnection(connectionString))
+            {
+                await probe.OpenAsync();
+            }
+
             _postgresContainer = container;
-            _connectionString = container.GetConnectionString();
+            _connectionString = connectionString;
             _usingContainer = true;
+            return null;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(
-                $"[WaypointApiFactory] Docker/Testcontainers unavailable ({ex.GetType().Name}: {ex.Message}) — " +
-                $"falling back to local Postgres database '{LocalTestDatabaseName}'.");
-            _usingContainer = false;
+            return $"{ex.GetType().Name}: {ex.Message}";
+        }
+    }
+
+    /// <returns>null on success; a diagnostic message on failure (never throws).</returns>
+    private async Task<string?> TryInitializeLocalFallbackAsync()
+    {
+        try
+        {
             await RecreateLocalTestDatabaseAsync();
-            _connectionString =
+            var connectionString =
                 $"Host=localhost;Port=5432;Database={LocalTestDatabaseName};Username=waypoint;Password=waypoint_dev_password";
+
+            await using (var probe = new NpgsqlConnection(connectionString))
+            {
+                await probe.OpenAsync();
+            }
+
+            _usingContainer = false;
+            _connectionString = connectionString;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return $"{ex.GetType().Name}: {ex.Message}";
         }
     }
 
@@ -105,7 +169,7 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
         {
             await _postgresContainer.DisposeAsync();
         }
-        else
+        else if (!_usingContainer && !string.IsNullOrEmpty(_connectionString))
         {
             try
             {
