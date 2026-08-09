@@ -8,7 +8,8 @@ namespace Waypoint.Community.Application.ResolveReport;
 /// report reviewed without removing anything, since that decision belongs to Mentorship.</summary>
 public sealed record ResolveReportCommand(Guid ReportId) : IRequest;
 
-public sealed class ResolveReportCommandHandler(ICommunityRepository repository)
+public sealed class ResolveReportCommandHandler(
+    ICommunityRepository repository, IAuditSink auditSink, ICurrentUserAccessor currentUser)
     : IRequestHandler<ResolveReportCommand>
 {
     public async Task Handle(ResolveReportCommand request, CancellationToken cancellationToken)
@@ -18,5 +19,9 @@ public sealed class ResolveReportCommandHandler(ICommunityRepository repository)
 
         report.Status = ReportStatus.Resolved;
         await repository.SaveReportAsync(report, cancellationToken);
+
+        await auditSink.RecordAsync(
+            new AuditEntry("ContentReport", report.Id, "ResolvedByAdmin", currentUser.UserId, null, DateTimeOffset.UtcNow),
+            cancellationToken);
     }
 }

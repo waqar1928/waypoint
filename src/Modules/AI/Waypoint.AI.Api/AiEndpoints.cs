@@ -16,19 +16,29 @@ public static class AiEndpoints
 {
     public static IEndpointRouteBuilder MapAiEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/ai").RequireAuthorization().RequireRateLimiting("ai").WithTags("AI");
+        // Split by cost, not by resource: only the two routes that actually trigger a billed
+        // Anthropic completion (StartConversation's opening turn, SendMessage) sit under the
+        // strict "ai" policy. Plain reads (list conversations, load message history) are no
+        // costlier than any other DB read, so they share the standard "api" budget — putting them
+        // under "ai" too would let a single coach-page load's list+messages fetch eat into the
+        // same 20/min budget as real AI turns, defeating the point of a separate, stricter tier.
+        var group = app.MapGroup("/api/v1/ai").RequireAuthorization().WithTags("AI");
 
         group.MapGet("/conversations", async (ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new GetMyConversationsQuery(), ct)));
+            Results.Ok(await sender.Send(new GetMyConversationsQuery(), ct)))
+            .RequireRateLimiting("api");
 
         group.MapPost("/conversations", async (StartConversationRequest body, ISender sender, CancellationToken ct) =>
-            Results.Created("/api/v1/ai/conversations", await sender.Send(new StartConversationCommand(body.Topic), ct)));
+            Results.Created("/api/v1/ai/conversations", await sender.Send(new StartConversationCommand(body.Topic), ct)))
+            .RequireRateLimiting("ai");
 
         group.MapGet("/conversations/{conversationId:guid}/messages", async (Guid conversationId, ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new GetConversationMessagesQuery(conversationId), ct)));
+            Results.Ok(await sender.Send(new GetConversationMessagesQuery(conversationId), ct)))
+            .RequireRateLimiting("api");
 
         group.MapPost("/conversations/{conversationId:guid}/messages", async (Guid conversationId, SendMessageRequest body, ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new SendMessageCommand(conversationId, body.Content), ct)));
+            Results.Ok(await sender.Send(new SendMessageCommand(conversationId, body.Content), ct)))
+            .RequireRateLimiting("ai");
 
         app.MapGroup("/api/v1/admin/ai-usage")
             .RequireAuthorization("Admin")

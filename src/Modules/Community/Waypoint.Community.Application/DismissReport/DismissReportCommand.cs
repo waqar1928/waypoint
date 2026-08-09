@@ -6,7 +6,8 @@ namespace Waypoint.Community.Application.DismissReport;
 
 public sealed record DismissReportCommand(Guid ReportId) : IRequest;
 
-public sealed class DismissReportCommandHandler(ICommunityRepository repository)
+public sealed class DismissReportCommandHandler(
+    ICommunityRepository repository, IAuditSink auditSink, ICurrentUserAccessor currentUser)
     : IRequestHandler<DismissReportCommand>
 {
     public async Task Handle(DismissReportCommand request, CancellationToken cancellationToken)
@@ -16,5 +17,9 @@ public sealed class DismissReportCommandHandler(ICommunityRepository repository)
 
         report.Status = ReportStatus.Dismissed;
         await repository.SaveReportAsync(report, cancellationToken);
+
+        await auditSink.RecordAsync(
+            new AuditEntry("ContentReport", report.Id, "DismissedByAdmin", currentUser.UserId, null, DateTimeOffset.UtcNow),
+            cancellationToken);
     }
 }

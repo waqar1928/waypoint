@@ -142,8 +142,33 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Kept dev-only-conditional rather than unconditional: local dev runs Kestrel on plain HTTP
+// (see launchSettings.json / --urls http://localhost:5080) with no dev HTTPS cert configured for
+// this API, so an unconditional UseHttpsRedirection() would break every local/live-verification
+// workflow. A production deployment either terminates TLS at Kestrel directly (this branch
+// applies) or at a reverse proxy/load balancer that already enforces HTTPS before traffic reaches
+// this process (this branch is then a harmless no-op, since the request already arrives as HTTPS).
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+
+// This API is only ever consumed by the Waypoint BFF (never renders HTML directly), but these
+// headers are cheap, standard defense-in-depth and protect the Problem Details/JSON error bodies
+// from being sniffed as HTML or framed by anything that did somehow get pointed at this origin.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    await next();
+});
+
 app.UseCors("WebApp");
 app.UseRateLimiter();
 app.UseAuthentication();

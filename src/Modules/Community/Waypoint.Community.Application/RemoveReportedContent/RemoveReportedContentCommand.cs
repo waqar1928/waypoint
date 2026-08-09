@@ -9,7 +9,8 @@ namespace Waypoint.Community.Application.RemoveReportedContent;
 /// directly. Help request reports must go through ResolveReportCommand instead.</summary>
 public sealed record RemoveReportedContentCommand(Guid ReportId) : IRequest;
 
-public sealed class RemoveReportedContentCommandHandler(ICommunityRepository repository)
+public sealed class RemoveReportedContentCommandHandler(
+    ICommunityRepository repository, IAuditSink auditSink, ICurrentUserAccessor currentUser)
     : IRequestHandler<RemoveReportedContentCommand>
 {
     public async Task Handle(RemoveReportedContentCommand request, CancellationToken cancellationToken)
@@ -44,5 +45,9 @@ public sealed class RemoveReportedContentCommandHandler(ICommunityRepository rep
 
         report.Status = ReportStatus.ContentRemoved;
         await repository.SaveReportAsync(report, cancellationToken);
+
+        await auditSink.RecordAsync(
+            new AuditEntry("ContentReport", report.Id, "ContentRemovedByAdmin", currentUser.UserId, null, DateTimeOffset.UtcNow),
+            cancellationToken);
     }
 }

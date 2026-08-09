@@ -15,7 +15,7 @@ marked done on a claim alone.
 | 6. Waypoint Coach (AI) | `IAiService` abstraction, conversations, Dream analysis, Idea Studio, Challenge My Idea | Designed, not built |
 | 7. Community & Mentorship | Posts, comments, privacy controls, help requests, mentor profiles | Designed, not built |
 | 8. Admin & Analytics | Users, dreams, moderation, mentor verification, AI usage, system health, audit log | Designed, not built |
-| 9. Security hardening | Full OWASP pass, pen-test-style review, rate limit tuning | Ongoing per phase, formal pass later |
+| 9. Security hardening | Full OWASP pass, pen-test-style review, rate limit tuning | **First formal pass done** — see `docs/10-security-audit-phase9.md` |
 | 10. Performance optimization | Core Web Vitals, query tuning, caching, code splitting | Ongoing per phase, formal pass later |
 | 11. Testing | Full unit/integration/API/frontend/E2E coverage pass | Ongoing per phase, formal pass later |
 | 12. Production deployment | CI/CD, environment hardening, observability rollout | Not started |
