@@ -34,6 +34,14 @@ jobs:
       - name: Run integration tests
         run: dotnet test tests/Waypoint.Api.IntegrationTests --no-build --configuration Release
 
+      # WaypointApiFactory writes its own connection diagnostics here (see that file) because
+      # xUnit's console capture around a class fixture's IAsyncLifetime methods has proven
+      # unreliable at surfacing Console output in this same job's own log — print the file
+      # directly instead of trusting it showed up above. Runs even on failure.
+      - name: Print WaypointApiFactory diagnostics
+        if: always()
+        run: cat /tmp/waypoint-integration-test-factory-diagnostics.log 2>/dev/null || echo "(no diagnostics file was written)"
+
   frontend:
     name: Frontend (lint, unit tests, build)
     runs-on: ubuntu-latest

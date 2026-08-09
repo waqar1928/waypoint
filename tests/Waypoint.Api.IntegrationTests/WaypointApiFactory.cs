@@ -54,23 +54,48 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
         });
     }
 
+    // Diagnostic trail written to a file, not just Console — xUnit's own output capture around a
+    // class fixture's IAsyncLifetime methods has proven unreliable at surfacing Console.WriteLine
+    // in the "dotnet test" console logger (confirmed empirically: two prior CI failures showed no
+    // trace of this class's own diagnostic lines at all, success or failure, even though the
+    // logic must have run for the process to reach the connection string it ultimately used). The
+    // CI workflow prints this file unconditionally after the test step so nothing gets swallowed.
+    //
+    // Hardcoded to /tmp rather than Path.GetTempPath() deliberately: on the GitHub Actions
+    // ubuntu-latest runner this phase targets, they're the same thing, but Path.GetTempPath()
+    // reads $TMPDIR, which some sandboxed local dev environments override to something other than
+    // /tmp — verified empirically that this was silently breaking local verification of this same
+    // diagnostic path before this fix.
+    private const string DiagnosticLogPath = "/tmp/waypoint-integration-test-factory-diagnostics.log";
+
+    private static void Log(string message)
+    {
+        var line = $"[{DateTimeOffset.UtcNow:O}] {message}";
+        Console.Error.WriteLine(line);
+        File.AppendAllText(DiagnosticLogPath, line + Environment.NewLine);
+    }
+
     public async Task InitializeAsync()
     {
+        Log("InitializeAsync starting.");
+
         var containerFailure = await TryInitializeContainerAsync();
         if (containerFailure is null)
         {
+            Log($"Using Testcontainers. Connection string host/port: {DescribeConnectionString(_connectionString)}");
             return;
         }
 
-        Console.Error.WriteLine(
-            $"[WaypointApiFactory] Testcontainers unavailable or unreachable ({containerFailure}) — " +
-            $"falling back to local Postgres database '{LocalTestDatabaseName}'.");
+        Log($"Testcontainers unavailable or unreachable ({containerFailure}) — falling back to local Postgres database '{LocalTestDatabaseName}'.");
 
         var localFailure = await TryInitializeLocalFallbackAsync();
         if (localFailure is null)
         {
+            Log($"Using local Postgres fallback. Connection string host/port: {DescribeConnectionString(_connectionString)}");
             return;
         }
+
+        Log($"Local fallback also failed: {localFailure}");
 
         throw new InvalidOperationException(
             "WaypointApiFactory could not reach a Postgres instance to run integration tests against. " +
@@ -78,6 +103,20 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
             $"Local Postgres fallback (host=localhost, port=5432) also failed: {localFailure}. " +
             "Either make a Docker daemon available (Testcontainers) or run a local Postgres server " +
             "matching apps/api/Waypoint.Api/appsettings.json's dev credentials.");
+    }
+
+    /// <summary>Host/port only — never logs the password.</summary>
+    private static string DescribeConnectionString(string connectionString)
+    {
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            return $"{builder.Host}:{builder.Port}/{builder.Database}";
+        }
+        catch (Exception ex)
+        {
+            return $"<unparseable: {ex.Message}>";
+        }
     }
 
     /// <returns>null on success; a diagnostic message on failure (never throws).</returns>
@@ -97,6 +136,7 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
 
             await container.StartAsync();
             var connectionString = container.GetConnectionString();
+            Log($"Container started. Reported connection string host/port: {DescribeConnectionString(connectionString)}");
 
             // Don't trust "StartAsync didn't throw" as proof the container is actually reachable —
             // confirm with a real connection before committing to this as the test database.
@@ -104,6 +144,7 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
             {
                 await probe.OpenAsync();
             }
+            Log("Probe connection to container succeeded.");
 
             _postgresContainer = container;
             _connectionString = connectionString;
@@ -124,11 +165,13 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
             await RecreateLocalTestDatabaseAsync();
             var connectionString =
                 $"Host=localhost;Port=5432;Database={LocalTestDatabaseName};Username=waypoint;Password=waypoint_dev_password";
+            Log("Local scratch database recreated successfully.");
 
             await using (var probe = new NpgsqlConnection(connectionString))
             {
                 await probe.OpenAsync();
             }
+            Log("Probe connection to local fallback succeeded.");
 
             _usingContainer = false;
             _connectionString = connectionString;
