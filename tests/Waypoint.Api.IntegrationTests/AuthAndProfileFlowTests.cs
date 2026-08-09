@@ -46,8 +46,15 @@ public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture
         var profile = await profileResponse.Content.ReadFromJsonAsync<ProfileResponse>();
         profile!.DisplayName.Should().Be("Alex Rivera");
 
+        // Antiforgery tokens are bound to auth state (see AntiforgeryValidationMiddleware /
+        // apps/api/Waypoint.Api/Program.cs) — the token fetched before login was issued for the
+        // anonymous session and is rejected now that the session is authenticated, exactly like
+        // the real frontend client re-fetches a token after login (lib/api-client.ts's
+        // invalidateCsrfToken()). Mirror that here rather than reusing the pre-login token.
+        var postLoginCsrfToken = (await client.GetFromJsonAsync<CsrfTokenResponse>("/api/v1/antiforgery/token"))!.Token;
+
         var logoutResponse = await client.SendAsync(
-            MutatingRequest(HttpMethod.Post, "/api/v1/auth/logout", csrfToken));
+            MutatingRequest(HttpMethod.Post, "/api/v1/auth/logout", postLoginCsrfToken));
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var profileAfterLogout = await client.GetAsync("/api/v1/me/profile");
