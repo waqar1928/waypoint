@@ -50,3 +50,35 @@ export const createActionSchema = z.object({
   dueDate: z.string().optional(),
 });
 export type CreateActionInput = z.infer<typeof createActionSchema>;
+
+export const createExperimentSchema = z.object({
+  ideaDescription: z.string().min(1, "Describe the idea you want to test").max(500, "Keep this under 500 characters"),
+  hypothesis: z.string().min(1, "State what you expect to happen").max(1000, "Keep this under 1000 characters"),
+  successCriteria: z.string().min(1, "Say how you'll know it worked").max(1000, "Keep this under 1000 characters"),
+});
+export type CreateExperimentInput = z.infer<typeof createExperimentSchema>;
+
+export const recordExperimentResultSchema = z.object({
+  outcome: z.enum(["validated", "partiallyValidated", "invalidated"]),
+  evidence: z.string().max(2000, "Keep this under 2000 characters").optional(),
+  learning: z.string().min(1, "Say what you learned").max(2000, "Keep this under 2000 characters"),
+});
+export type RecordExperimentResultInput = z.infer<typeof recordExperimentResultSchema>;
+
+export const businessIdeaSchema = z.object({
+  problem: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  customer: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  valueProposition: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  solution: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  businessModel: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  market: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  competitors: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  pricing: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  marketing: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  sales: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  operations: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  technology: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  financialAssumptions: z.string().max(5000, "Keep this under 5000 characters").optional(),
+  risks: z.string().max(5000, "Keep this under 5000 characters").optional(),
+});
+export type BusinessIdeaInput = z.infer<typeof businessIdeaSchema>;

@@ -13,7 +13,8 @@ public sealed record UpdateDreamStatementCommand(
     string? Problem,
     string? Outcome,
     string? Motivation,
-    string? Impact) : IRequest<DreamDto>;
+    string? Impact,
+    bool IsBusinessShaped) : IRequest<DreamDto>;
 
 public sealed class UpdateDreamStatementCommandValidator : AbstractValidator<UpdateDreamStatementCommand>
 {
@@ -40,6 +41,7 @@ public sealed class UpdateDreamStatementCommandHandler(IDreamRepository reposito
             ?? throw new NotFoundException("You don't have a dream yet.");
 
         dream.Title = request.Title;
+        dream.IsBusinessShaped = request.IsBusinessShaped;
         dream.UpdatedBy = userId;
 
         dream.Statement.Statement = request.Statement;

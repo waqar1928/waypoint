@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Compass, FlaskConical, ListChecks } from "lucide-react";
+import { ArrowRight, Building2, Compass, FlaskConical, ListChecks } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { buttonClasses } from "@/components/ui/button";
 import { getProfile } from "@/lib/profile";
@@ -7,6 +7,8 @@ import { getMyDream } from "@/lib/dream";
 import { getRecentJournalEntries } from "@/lib/journal";
 import { getMyPlan, getMyMilestones } from "@/lib/plan";
 import { getNextBestAction } from "@/lib/actions";
+import { getMyExperiments } from "@/lib/experiments";
+import { getMyBusinessValidations } from "@/lib/business";
 import { JournalPanel } from "@/components/app/journal-panel";
 import { MilestonesPanel } from "@/components/app/milestones-panel";
 
@@ -22,14 +24,18 @@ const arcLabels: Record<(typeof arcStages)[number], string> = {
 };
 
 export default async function DashboardPage() {
-  const [profile, dream, journalEntries, plan, milestones, nextBestAction] = await Promise.all([
-    getProfile(),
-    getMyDream(),
-    getRecentJournalEntries(),
-    getMyPlan(),
-    getMyMilestones(),
-    getNextBestAction(),
-  ]);
+  const [profile, dream, journalEntries, plan, milestones, nextBestAction, experiments, businessValidations] =
+    await Promise.all([
+      getProfile(),
+      getMyDream(),
+      getRecentJournalEntries(),
+      getMyPlan(),
+      getMyMilestones(),
+      getNextBestAction(),
+      getMyExperiments(),
+      getMyBusinessValidations(),
+    ]);
+  const latestViability = businessValidations[0] ?? null;
 
   const firstName = profile?.displayName?.split(" ")[0] ?? "there";
   const currentStage = dream?.stage ?? "discover";
@@ -128,11 +134,45 @@ export default async function DashboardPage() {
           />
         )}
 
-        <EmptyStateCard
-          icon={FlaskConical}
-          title="Experiments"
-          description="No experiments yet — the Experiment Lab opens in a later phase."
-        />
+        {experiments.length > 0 ? (
+          <Card>
+            <FlaskConical className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+            <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Experiments</h3>
+            <p className="mt-1 text-sm text-ink-700">
+              {experiments.length} {experiments.length === 1 ? "experiment" : "experiments"} ·{" "}
+              {experiments.filter((e) => e.status === "running").length} running
+            </p>
+            <Link href="/app/experiments" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+              Go to Experiment Lab
+            </Link>
+          </Card>
+        ) : (
+          <Card>
+            <FlaskConical className="h-5 w-5 text-ink-500" aria-hidden="true" />
+            <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Experiments</h3>
+            <p className="mt-1 text-sm text-ink-500">
+              Test the smallest possible next step before you commit to it.
+            </p>
+            <Link href="/app/experiments" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+              Start an experiment
+            </Link>
+          </Card>
+        )}
+
+        {dream?.isBusinessShaped ? (
+          <Card>
+            <Building2 className="h-5 w-5 text-beacon-500" aria-hidden="true" />
+            <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Business Builder</h3>
+            <p className="mt-1 text-sm text-ink-700">
+              {latestViability
+                ? `Latest viability estimate: ${latestViability.viabilityEstimate ?? "—"}/100`
+                : "Fill in your business profile to get a viability estimate."}
+            </p>
+            <Link href="/app/business" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+              Go to Business Builder
+            </Link>
+          </Card>
+        ) : null}
       </div>
 
       <Card className="mt-6">

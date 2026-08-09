@@ -27,6 +27,14 @@
     <ProjectReference Include="..\..\..\src\Modules\Actions\Waypoint.Actions.Application\Waypoint.Actions.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Actions\Waypoint.Actions.Infrastructure\Waypoint.Actions.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Actions\Waypoint.Actions.Api\Waypoint.Actions.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Experiments\Waypoint.Experiments.Domain\Waypoint.Experiments.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Experiments\Waypoint.Experiments.Application\Waypoint.Experiments.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Experiments\Waypoint.Experiments.Infrastructure\Waypoint.Experiments.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Experiments\Waypoint.Experiments.Api\Waypoint.Experiments.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Domain\Waypoint.BusinessIdeas.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Application\Waypoint.BusinessIdeas.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Infrastructure\Waypoint.BusinessIdeas.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\BusinessIdeas\Waypoint.BusinessIdeas.Api\Waypoint.BusinessIdeas.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

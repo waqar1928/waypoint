@@ -9,9 +9,13 @@ using Waypoint.Actions.Api;
 using Waypoint.Actions.Infrastructure;
 using Waypoint.Api;
 using Waypoint.Audit.Infrastructure;
+using Waypoint.BusinessIdeas.Api;
+using Waypoint.BusinessIdeas.Infrastructure;
 using Waypoint.Common;
 using Waypoint.Dreams.Api;
 using Waypoint.Dreams.Infrastructure;
+using Waypoint.Experiments.Api;
+using Waypoint.Experiments.Infrastructure;
 using Waypoint.Goals.Api;
 using Waypoint.Goals.Infrastructure;
 using Waypoint.Identity.Api;
@@ -34,6 +38,8 @@ builder.Services.AddDreamsModule(builder.Configuration);
 builder.Services.AddJournalModule(builder.Configuration);
 builder.Services.AddGoalsModule(builder.Configuration);
 builder.Services.AddActionsModule(builder.Configuration);
+builder.Services.AddExperimentsModule(builder.Configuration);
+builder.Services.AddBusinessIdeasModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
 builder.Services.AddHttpContextAccessor();
@@ -52,6 +58,8 @@ var applicationAssemblies = new[]
     Assembly.Load("Waypoint.Journal.Application"),
     Assembly.Load("Waypoint.Goals.Application"),
     Assembly.Load("Waypoint.Actions.Application"),
+    Assembly.Load("Waypoint.Experiments.Application"),
+    Assembly.Load("Waypoint.BusinessIdeas.Application"),
 };
 
 builder.Services.AddMediatR(cfg =>
@@ -124,6 +132,8 @@ app.MapDreamsEndpoints();
 app.MapJournalEndpoints();
 app.MapGoalsEndpoints();
 app.MapActionsEndpoints();
+app.MapExperimentsEndpoints();
+app.MapBusinessIdeasEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
