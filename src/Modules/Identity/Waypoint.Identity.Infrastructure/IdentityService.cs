@@ -119,9 +119,9 @@ public sealed class IdentityService(
             : IdentityOperationResult.Failure(result.Errors.Select(e => e.Description));
     }
 
-    public async Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(int take, CancellationToken cancellationToken)
     {
-        var users = await userManager.Users.OrderBy(u => u.Email).ToListAsync(cancellationToken);
+        var users = await userManager.Users.AsNoTracking().OrderBy(u => u.Email).Take(take).ToListAsync(cancellationToken);
         var results = new List<AdminUserLookup>(users.Count);
         foreach (var user in users)
         {

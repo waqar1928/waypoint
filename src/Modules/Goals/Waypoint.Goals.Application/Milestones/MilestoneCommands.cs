@@ -66,9 +66,11 @@ public sealed class MarkMilestoneAchievedCommandHandler(
         var dream = await dreamSummaryProvider.GetForUserAsync(userId, cancellationToken)
             ?? throw new NotFoundException("You don't have a dream yet.");
 
-        var milestones = await repository.GetMilestonesForDreamAsync(dream.DreamId, cancellationToken);
-        var milestone = milestones.FirstOrDefault(m => m.Id == request.MilestoneId)
-            ?? throw new NotFoundException("Milestone not found.");
+        var milestone = await repository.GetMilestoneByIdAsync(request.MilestoneId, cancellationToken);
+        if (milestone is null || milestone.DreamId != dream.DreamId)
+        {
+            throw new NotFoundException("Milestone not found.");
+        }
 
         milestone.AchievedAt = DateTimeOffset.UtcNow;
         milestone.UpdatedBy = userId;

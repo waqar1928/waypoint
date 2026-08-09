@@ -13,14 +13,15 @@ public sealed record AdminDreamDto(
     bool IsBusinessShaped,
     DateTimeOffset CreatedAt);
 
-public sealed record GetAllDreamsQuery : IRequest<IReadOnlyList<AdminDreamDto>>;
+public sealed record GetAllDreamsQuery(int Take = 5000) : IRequest<IReadOnlyList<AdminDreamDto>>;
 
 public sealed class GetAllDreamsQueryHandler(IDreamRepository repository, IProfileSummaryProvider profileSummaryProvider)
     : IRequestHandler<GetAllDreamsQuery, IReadOnlyList<AdminDreamDto>>
 {
     public async Task<IReadOnlyList<AdminDreamDto>> Handle(GetAllDreamsQuery request, CancellationToken cancellationToken)
     {
-        var dreams = await repository.GetAllAsync(cancellationToken);
+        var take = Math.Clamp(request.Take, 1, 20000);
+        var dreams = await repository.GetAllAsync(take, cancellationToken);
         var profiles = await profileSummaryProvider.GetForUsersAsync(dreams.Select(d => d.UserId).ToList(), cancellationToken);
 
         return dreams

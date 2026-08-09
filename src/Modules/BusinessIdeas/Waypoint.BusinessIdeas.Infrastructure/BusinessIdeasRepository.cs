@@ -27,6 +27,7 @@ public sealed class BusinessIdeasRepository(BusinessIdeasDbContext db) : IBusine
     public async Task<IReadOnlyList<BusinessValidation>> GetValidationsForIdeaAsync(
         Guid businessIdeaId, CancellationToken cancellationToken) =>
         await db.BusinessValidations
+            .AsNoTracking()
             .Where(v => v.BusinessIdeaId == businessIdeaId)
             .OrderByDescending(v => v.CreatedAt)
             .ToListAsync(cancellationToken);

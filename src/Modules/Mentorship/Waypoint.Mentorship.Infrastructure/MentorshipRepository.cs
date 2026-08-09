@@ -13,20 +13,19 @@ public sealed class MentorshipRepository(MentorshipDbContext db) : IMentorshipRe
         db.MentorProfiles.SingleOrDefaultAsync(m => m.Id == mentorProfileId, cancellationToken);
 
     public async Task<IReadOnlyList<MentorProfile>> GetMentorDirectoryAsync(
-        string? expertiseFilter, CancellationToken cancellationToken)
+        string? expertiseFilter, int take, CancellationToken cancellationToken)
     {
         // Expertise is a jsonb-mapped List<string> — filtering "does this list contain X" isn't
         // translatable to SQL through the value converter, so fetch and filter in memory. Fine at
-        // this app's scale; revisit with a real search index if the mentor pool grows large.
-        var profiles = await db.MentorProfiles.ToListAsync(cancellationToken);
-        if (string.IsNullOrWhiteSpace(expertiseFilter))
-        {
-            return profiles;
-        }
+        // this app's scale; revisit with a real search index if the mentor pool grows large. The
+        // `take` cap has to apply after the in-memory filter (not as a SQL LIMIT before it), or a
+        // narrow expertise search could get truncated away before it ever gets a chance to match.
+        var profiles = await db.MentorProfiles.AsNoTracking().OrderByDescending(p => p.CreatedAt).ToListAsync(cancellationToken);
+        var filtered = string.IsNullOrWhiteSpace(expertiseFilter)
+            ? profiles
+            : profiles.Where(p => p.Expertise.Any(e => e.Contains(expertiseFilter, StringComparison.OrdinalIgnoreCase)));
 
-        return profiles
-            .Where(p => p.Expertise.Any(e => e.Contains(expertiseFilter, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        return filtered.Take(take).ToList();
     }
 
     public async Task AddMentorProfileAsync(MentorProfile profile, CancellationToken cancellationToken)
@@ -48,9 +47,9 @@ public sealed class MentorshipRepository(MentorshipDbContext db) : IMentorshipRe
         db.HelpRequests.SingleOrDefaultAsync(h => h.Id == helpRequestId, cancellationToken);
 
     public async Task<IReadOnlyList<HelpRequest>> GetHelpRequestsAsync(
-        HelpRequestCategory? categoryFilter, HelpRequestStatus? statusFilter, CancellationToken cancellationToken)
+        HelpRequestCategory? categoryFilter, HelpRequestStatus? statusFilter, int take, CancellationToken cancellationToken)
     {
-        var query = db.HelpRequests.AsQueryable();
+        var query = db.HelpRequests.AsNoTracking().AsQueryable();
         if (categoryFilter is not null)
         {
             query = query.Where(h => h.Category == categoryFilter);
@@ -59,11 +58,11 @@ public sealed class MentorshipRepository(MentorshipDbContext db) : IMentorshipRe
         {
             query = query.Where(h => h.Status == statusFilter);
         }
-        return await query.ToListAsync(cancellationToken);
+        return await query.OrderByDescending(h => h.CreatedAt).Take(take).ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<HelpRequest>> GetHelpRequestsForUserAsync(Guid userId, CancellationToken cancellationToken) =>
-        await db.HelpRequests.Where(h => h.UserId == userId).ToListAsync(cancellationToken);
+        await db.HelpRequests.AsNoTracking().Where(h => h.UserId == userId).ToListAsync(cancellationToken);
 
     public async Task AddHelpRequestAsync(HelpRequest request, CancellationToken cancellationToken)
     {
@@ -98,6 +97,7 @@ public sealed class MentorshipRepository(MentorshipDbContext db) : IMentorshipRe
     public async Task<IReadOnlyList<HelpRequestResponse>> GetResponsesForHelpRequestAsync(
         Guid helpRequestId, CancellationToken cancellationToken) =>
         await db.HelpRequestResponses
+            .AsNoTracking()
             .Where(r => r.HelpRequestId == helpRequestId)
             .ToListAsync(cancellationToken);
 

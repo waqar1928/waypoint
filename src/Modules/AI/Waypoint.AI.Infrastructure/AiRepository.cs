@@ -10,7 +10,7 @@ public sealed class AiRepository(AiDbContext db) : IAiRepository
         db.Conversations.SingleOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
 
     public async Task<IReadOnlyList<AiConversation>> GetConversationsForUserAsync(Guid userId, CancellationToken cancellationToken) =>
-        await db.Conversations.Where(c => c.UserId == userId).ToListAsync(cancellationToken);
+        await db.Conversations.AsNoTracking().Where(c => c.UserId == userId).ToListAsync(cancellationToken);
 
     public async Task AddConversationAsync(AiConversation conversation, CancellationToken cancellationToken)
     {
@@ -34,6 +34,7 @@ public sealed class AiRepository(AiDbContext db) : IAiRepository
 
     public async Task<IReadOnlyList<AiMessage>> GetMessagesForConversationAsync(Guid conversationId, CancellationToken cancellationToken) =>
         await db.Messages
+            .AsNoTracking()
             .Where(m => m.ConversationId == conversationId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -46,6 +47,7 @@ public sealed class AiRepository(AiDbContext db) : IAiRepository
 
     public Task<PromptTemplate?> GetActiveTemplateAsync(string key, CancellationToken cancellationToken) =>
         db.PromptTemplates
+            .AsNoTracking()
             .Where(t => t.Key == key && t.IsActive)
             .OrderByDescending(t => t.Version)
             .FirstOrDefaultAsync(cancellationToken);

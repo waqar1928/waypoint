@@ -52,6 +52,10 @@ builder.Services.AddCommunityModule(builder.Configuration);
 builder.Services.AddMentorshipModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
+// In-process only (not distributed) — sole current consumer is AnthropicAiService's prompt
+// template lookup, a single-instance dev/staging deployment. Revisit with a distributed cache
+// (Redis) if this ever runs multi-instance and needs cache coherency across processes.
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

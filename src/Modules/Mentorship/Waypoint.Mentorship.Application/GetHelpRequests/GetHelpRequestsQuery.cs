@@ -4,7 +4,7 @@ using Waypoint.Mentorship.Domain;
 
 namespace Waypoint.Mentorship.Application.GetHelpRequests;
 
-public sealed record GetHelpRequestsQuery(HelpRequestCategory? CategoryFilter, HelpRequestStatus? StatusFilter)
+public sealed record GetHelpRequestsQuery(HelpRequestCategory? CategoryFilter, HelpRequestStatus? StatusFilter, int Take = 100)
     : IRequest<IReadOnlyList<HelpRequestDto>>;
 
 public sealed class GetHelpRequestsQueryHandler(
@@ -15,13 +15,14 @@ public sealed class GetHelpRequestsQueryHandler(
     {
         var userId = currentUser.UserId ?? throw new AuthenticationFailedException("Not signed in.");
 
-        var requests = await repository.GetHelpRequestsAsync(request.CategoryFilter, request.StatusFilter, cancellationToken);
+        var take = Math.Clamp(request.Take, 1, 200);
+        var requests = await repository.GetHelpRequestsAsync(request.CategoryFilter, request.StatusFilter, take, cancellationToken);
         var counts = await repository.GetResponseCountsAsync(requests.Select(r => r.Id).ToList(), cancellationToken);
         var authors = await PersonResolver.ResolveManyAsync(
             profileSummaryProvider, requests.Select(r => r.UserId).ToList(), cancellationToken);
 
+        // Already ordered by the repository (most-recent-first, capped at `take`).
         return requests
-            .OrderByDescending(r => r.CreatedAt)
             .Select(r => HelpRequestDto.From(r, authors[r.UserId], counts.GetValueOrDefault(r.Id), userId))
             .ToList();
     }

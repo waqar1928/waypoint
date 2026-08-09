@@ -10,17 +10,18 @@ public sealed class GoalsRepository(GoalsDbContext db) : IGoalsRepository
         db.Goals.AnyAsync(g => g.DreamId == dreamId && g.DeletedAt == null, cancellationToken);
 
     public async Task<IReadOnlyList<Goal>> GetGoalsForDreamAsync(Guid dreamId, CancellationToken cancellationToken) =>
-        await db.Goals.Where(g => g.DreamId == dreamId && g.DeletedAt == null)
+        await db.Goals.AsNoTracking().Where(g => g.DreamId == dreamId && g.DeletedAt == null)
             .OrderBy(g => g.Horizon)
             .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Mission>> GetMissionsForDreamAsync(Guid dreamId, CancellationToken cancellationToken)
     {
-        var goalIds = await db.Goals.Where(g => g.DreamId == dreamId && g.DeletedAt == null)
+        var goalIds = await db.Goals.AsNoTracking().Where(g => g.DreamId == dreamId && g.DeletedAt == null)
             .Select(g => g.Id)
             .ToListAsync(cancellationToken);
 
         return await db.Missions
+            .AsNoTracking()
             .Where(m => goalIds.Contains(m.GoalId) && m.DeletedAt == null)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -58,10 +59,18 @@ public sealed class GoalsRepository(GoalsDbContext db) : IGoalsRepository
     }
 
     public async Task<IReadOnlyList<Milestone>> GetMilestonesForDreamAsync(Guid dreamId, CancellationToken cancellationToken) =>
-        await db.Milestones.Where(m => m.DreamId == dreamId)
+        await db.Milestones.AsNoTracking().Where(m => m.DreamId == dreamId)
             .OrderByDescending(m => m.AchievedAt ?? DateTimeOffset.MaxValue)
             .ThenByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
+
+    // Tracked (no AsNoTracking) — MarkMilestoneAchievedCommand loads via this method specifically
+    // so it can mutate and save the same tracked instance. Every module here uses xmin-based
+    // optimistic concurrency (see UseXminConcurrencyToken<T>()); an AsNoTracking-loaded entity
+    // never captures the xmin shadow value, so a later Update() call would send a stale/default
+    // token and every save would fail with a DbUpdateConcurrencyException ("0 rows affected").
+    public Task<Milestone?> GetMilestoneByIdAsync(Guid milestoneId, CancellationToken cancellationToken) =>
+        db.Milestones.SingleOrDefaultAsync(m => m.Id == milestoneId, cancellationToken);
 
     public async Task AddMilestoneAsync(Milestone milestone, CancellationToken cancellationToken)
     {

@@ -60,8 +60,10 @@ public static class MentorshipEndpoints
             .RequireRateLimiting("api")
             .WithTags("Admin");
 
+        // Explicit high Take (not the public-directory default) — admin oversight needs every
+        // mentor profile, not just the most recently created page of them.
         admin.MapGet("/", async (ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new GetMentorDirectoryQuery(null), ct)));
+            Results.Ok(await sender.Send(new GetMentorDirectoryQuery(null, Take: 5000), ct)));
 
         admin.MapPut("/{mentorProfileId:guid}/verification", async (Guid mentorProfileId, UpdateVerificationRequest body, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new UpdateMentorVerificationCommand(mentorProfileId, body.Status), ct)));

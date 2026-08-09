@@ -22,6 +22,6 @@ public sealed class DreamRepository(DreamsDbContext db) : IDreamRepository
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Dream>> GetAllAsync(CancellationToken cancellationToken) =>
-        await db.Dreams.Where(d => d.DeletedAt == null).OrderByDescending(d => d.CreatedAt).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<Dream>> GetAllAsync(int take, CancellationToken cancellationToken) =>
+        await db.Dreams.AsNoTracking().Where(d => d.DeletedAt == null).OrderByDescending(d => d.CreatedAt).Take(take).ToListAsync(cancellationToken);
 }

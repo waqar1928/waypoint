@@ -53,8 +53,10 @@ public interface IIdentityService
     Task<IdentityOperationResult> DeleteUserAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>Admin-only (Phase 8) — every account, most recently created first isn't tracked
-    /// (ApplicationUser has no CreatedAt), so this is ordered by email for stable pagination-free display.</summary>
-    Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(CancellationToken cancellationToken);
+    /// (ApplicationUser has no CreatedAt), so this is ordered by email for stable pagination-free
+    /// display. Capped at <paramref name="take"/> as a Phase 10 safety net against unbounded
+    /// growth, not a real paging UX — the admin caller passes a generous limit.</summary>
+    Task<IReadOnlyList<AdminUserLookup>> GetAllUsersAsync(int take, CancellationToken cancellationToken);
 
     /// <summary>Locks the account indefinitely (DateTimeOffset.MaxValue) using ASP.NET Core
     /// Identity's existing lockout mechanism — the same one that already locks an account out

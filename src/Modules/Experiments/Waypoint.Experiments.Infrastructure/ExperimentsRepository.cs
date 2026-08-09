@@ -7,7 +7,7 @@ namespace Waypoint.Experiments.Infrastructure;
 public sealed class ExperimentsRepository(ExperimentsDbContext db) : IExperimentsRepository
 {
     public async Task<IReadOnlyList<Experiment>> GetForDreamAsync(Guid dreamId, CancellationToken cancellationToken) =>
-        await db.Experiments.Where(e => e.DreamId == dreamId && e.DeletedAt == null)
+        await db.Experiments.AsNoTracking().Where(e => e.DreamId == dreamId && e.DeletedAt == null)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -38,6 +38,7 @@ public sealed class ExperimentsRepository(ExperimentsDbContext db) : IExperiment
         }
 
         return await db.ExperimentResults
+            .AsNoTracking()
             .Where(r => experimentIds.Contains(r.ExperimentId))
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);

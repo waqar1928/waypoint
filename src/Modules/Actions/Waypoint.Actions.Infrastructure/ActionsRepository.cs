@@ -9,7 +9,7 @@ public sealed class ActionsRepository(ActionsDbContext db) : IActionsRepository
     public async Task<IReadOnlyList<ActionItem>> GetForDreamAsync(
         Guid dreamId, ActionStatus? statusFilter, CancellationToken cancellationToken)
     {
-        var query = db.Actions.Where(a => a.DreamId == dreamId && a.DeletedAt == null);
+        var query = db.Actions.AsNoTracking().Where(a => a.DreamId == dreamId && a.DeletedAt == null);
         if (statusFilter is not null)
         {
             query = query.Where(a => a.Status == statusFilter);

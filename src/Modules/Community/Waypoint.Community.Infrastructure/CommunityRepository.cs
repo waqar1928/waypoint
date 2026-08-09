@@ -10,11 +10,14 @@ public sealed class CommunityRepository(CommunityDbContext db) : ICommunityRepos
         db.Posts.SingleOrDefaultAsync(p => p.Id == postId && p.DeletedAt == null, cancellationToken);
 
     public async Task<IReadOnlyList<CommunityPost>> GetPostsForUserAsync(Guid userId, CancellationToken cancellationToken) =>
-        await db.Posts.Where(p => p.UserId == userId && p.DeletedAt == null).ToListAsync(cancellationToken);
+        await db.Posts.AsNoTracking().Where(p => p.UserId == userId && p.DeletedAt == null).ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<CommunityPost>> GetFeedAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<CommunityPost>> GetFeedAsync(int take, CancellationToken cancellationToken) =>
         await db.Posts
+            .AsNoTracking()
             .Where(p => p.Visibility != PostVisibility.Private && p.DeletedAt == null)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(take)
             .ToListAsync(cancellationToken);
 
     public async Task AddPostAsync(CommunityPost post, CancellationToken cancellationToken)
@@ -52,8 +55,37 @@ public sealed class CommunityRepository(CommunityDbContext db) : ICommunityRepos
 
     public async Task<IReadOnlyList<Comment>> GetCommentsForPostAsync(Guid postId, CancellationToken cancellationToken) =>
         await db.Comments
+            .AsNoTracking()
             .Where(c => c.PostId == postId && c.DeletedAt == null)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, CommunityPost>> GetPostsByIdsAsync(
+        IReadOnlyList<Guid> postIds, CancellationToken cancellationToken)
+    {
+        if (postIds.Count == 0)
+        {
+            return new Dictionary<Guid, CommunityPost>();
+        }
+
+        return await db.Posts
+            .AsNoTracking()
+            .Where(p => postIds.Contains(p.Id) && p.DeletedAt == null)
+            .ToDictionaryAsync(p => p.Id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, Comment>> GetCommentsByIdsAsync(
+        IReadOnlyList<Guid> commentIds, CancellationToken cancellationToken)
+    {
+        if (commentIds.Count == 0)
+        {
+            return new Dictionary<Guid, Comment>();
+        }
+
+        return await db.Comments
+            .AsNoTracking()
+            .Where(c => commentIds.Contains(c.Id) && c.DeletedAt == null)
+            .ToDictionaryAsync(c => c.Id, cancellationToken);
+    }
 
     public async Task AddCommentAsync(Comment comment, CancellationToken cancellationToken)
     {
@@ -72,6 +104,7 @@ public sealed class CommunityRepository(CommunityDbContext db) : ICommunityRepos
 
     public async Task<IReadOnlyList<ContentReportRecord>> GetOpenReportsAsync(CancellationToken cancellationToken) =>
         await db.ContentReports
+            .AsNoTracking()
             .Where(r => r.Status == ReportStatus.Open)
             .OrderBy(r => r.CreatedAt)
             .ToListAsync(cancellationToken);

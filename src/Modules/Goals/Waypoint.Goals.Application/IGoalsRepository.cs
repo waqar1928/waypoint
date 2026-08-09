@@ -17,6 +17,7 @@ public interface IGoalsRepository
     Task SaveMissionAsync(Mission mission, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Milestone>> GetMilestonesForDreamAsync(Guid dreamId, CancellationToken cancellationToken);
+    Task<Milestone?> GetMilestoneByIdAsync(Guid milestoneId, CancellationToken cancellationToken);
     Task AddMilestoneAsync(Milestone milestone, CancellationToken cancellationToken);
     Task SaveMilestoneAsync(Milestone milestone, CancellationToken cancellationToken);
 }

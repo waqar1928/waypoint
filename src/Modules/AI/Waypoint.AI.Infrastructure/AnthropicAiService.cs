@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Waypoint.AI.Application;
@@ -21,7 +22,7 @@ namespace Waypoint.AI.Infrastructure;
 /// to treat user content as information rather than instructions.
 /// </summary>
 public sealed class AnthropicAiService(
-    HttpClient httpClient, AiDbContext db, IConfiguration configuration, ILogger<AnthropicAiService> logger)
+    HttpClient httpClient, AiDbContext db, IConfiguration configuration, IMemoryCache cache, ILogger<AnthropicAiService> logger)
     : IAiService
 {
     private const string DefaultModel = "claude-sonnet-4-5-20250929";
@@ -29,11 +30,21 @@ public sealed class AnthropicAiService(
 
     public async Task<AiResponse> CompleteAsync(AiRequest request, CancellationToken cancellationToken)
     {
-        var template = await db.PromptTemplates
-            .Where(t => t.Key == request.PromptTemplateKey && t.IsActive)
-            .OrderByDescending(t => t.Version)
-            .FirstOrDefaultAsync(cancellationToken)
-            ?? throw new AiServiceUnavailableException($"No active prompt template for key '{request.PromptTemplateKey}'.");
+        // PromptTemplate is global reference data (same active version for a given key regardless
+        // of who's asking) seeded once at startup with no runtime edit path yet — a genuinely safe
+        // cache target, unlike almost everything else in this app which is per-user. Queried on
+        // every single AI turn (this method is the hot path for both StartConversation's opening
+        // turn and every SendMessage call), so this removes a DB round-trip from every AI request.
+        var cacheKey = $"prompt-template:{request.PromptTemplateKey}";
+        var template = await cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.SlidingExpiration = TimeSpan.FromMinutes(10);
+            return await db.PromptTemplates
+                .AsNoTracking()
+                .Where(t => t.Key == request.PromptTemplateKey && t.IsActive)
+                .OrderByDescending(t => t.Version)
+                .FirstOrDefaultAsync(cancellationToken);
+        }) ?? throw new AiServiceUnavailableException($"No active prompt template for key '{request.PromptTemplateKey}'.");
 
         var apiKey = configuration["ANTHROPIC_API_KEY"];
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -43,6 +54,7 @@ public sealed class AnthropicAiService(
         }
 
         var history = await db.Messages
+            .AsNoTracking()
             .Where(m => m.ConversationId == request.ConversationId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
