@@ -42,16 +42,25 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
     private bool _usingContainer;
     private string _connectionString = string.Empty;
 
+    // Deliberately NOT relying on ConfigureWebHost's ConfigureAppConfiguration(AddInMemoryCollection)
+    // to inject the connection string — this is the real bug the last three CI failures traced back
+    // to. Every module's AddXxxModule(configuration) extension method reads the Postgres connection
+    // string EAGERLY at service-registration time (`configuration.GetConnectionString("Postgres")`,
+    // captured into a closure passed to `UseNpgsql(...)`), and that registration happens as part of
+    // Program.cs's own top-level code, executing BEFORE WebApplicationFactory's DeferredHostBuilder
+    // folds this class's ConfigureAppConfiguration override into `builder.Configuration`. The
+    // override was silently arriving too late on every run — confirmed via file-based diagnostics
+    // (see Log below) that Testcontainers itself was working the whole time, correctly reporting
+    // its real (random) mapped port, while the app still connected to the literal dev value baked
+    // into appsettings.json. Environment variables don't have this problem: they're included in
+    // WebApplication.CreateBuilder(args)'s configuration sources from the very first line of
+    // Program.cs, so setting one here (in InitializeAsync, guaranteed by xUnit's IAsyncLifetime to
+    // run before any test can trigger Program.Main() via CreateClient()) is visible in time for
+    // every module's eager connection-string read.
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Postgres"] = _connectionString,
-                ["Waypoint:AutoMigrate"] = "true",
-            });
-        });
+        Environment.SetEnvironmentVariable("ConnectionStrings__Postgres", _connectionString);
+        Environment.SetEnvironmentVariable("Waypoint__AutoMigrate", "true");
     }
 
     // Diagnostic trail written to a file, not just Console — xUnit's own output capture around a
