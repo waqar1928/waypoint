@@ -14,10 +14,12 @@ public class UpdateActionStatusCommandHandlerTests
     private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly IAuditSink _auditSink = Substitute.For<IAuditSink>();
+    private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _dreamId = Guid.NewGuid();
 
-    private UpdateActionStatusCommandHandler CreateHandler() => new(_repository, _dreamSummaryProvider, _currentUser, _auditSink);
+    private UpdateActionStatusCommandHandler CreateHandler() =>
+        new(_repository, _dreamSummaryProvider, _currentUser, _auditSink, _analyticsSink);
 
     private void ArrangeSignedInUserWithDream()
     {

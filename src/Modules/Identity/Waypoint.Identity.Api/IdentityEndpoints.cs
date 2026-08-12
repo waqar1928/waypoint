@@ -13,6 +13,7 @@ using Waypoint.Identity.Application.ForgotPassword;
 using Waypoint.Identity.Application.Login;
 using Waypoint.Identity.Application.Logout;
 using Waypoint.Identity.Application.Register;
+using Waypoint.Identity.Application.ResendVerification;
 using Waypoint.Identity.Application.ResetPassword;
 using Waypoint.Identity.Application.Session;
 using Waypoint.Identity.Application.VerifyEmail;
@@ -65,6 +66,12 @@ public static class IdentityEndpoints
         {
             await sender.Send(command, ct);
             return Results.Ok();
+        });
+
+        group.MapPost("/resend-verification", async (ResendVerificationEmailCommand command, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(command, ct);
+            return Results.Accepted();
         });
 
         app.MapDelete("/api/v1/me", async ([FromBody] DeleteAccountRequest body, ISender sender, CancellationToken ct) =>

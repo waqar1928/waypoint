@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/app/notification-bell";
 import { apiMutate, invalidateCsrfToken } from "@/lib/api-client";
 
 export function TopBar({ email }: { email: string }) {
@@ -20,10 +21,13 @@ export function TopBar({ email }: { email: string }) {
       <p className="text-sm text-ink-700">
         Signed in as <span className="font-medium text-ink-900">{email}</span>
       </p>
-      <Button variant="ghost" onClick={handleLogout} className="gap-2 px-3">
-        <LogOut className="h-4 w-4" aria-hidden="true" />
-        Log out
-      </Button>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <Button variant="ghost" onClick={handleLogout} className="gap-2 px-3">
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          Log out
+        </Button>
+      </div>
     </header>
   );
 }

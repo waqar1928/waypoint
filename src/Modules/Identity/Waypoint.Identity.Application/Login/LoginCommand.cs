@@ -41,6 +41,8 @@ public sealed class LoginCommandHandler(
         throw result.Outcome switch
         {
             SignInOutcome.LockedOut => new AccountLockedException("Too many failed attempts. Please try again later."),
+            SignInOutcome.EmailNotConfirmed => new EmailNotConfirmedException(
+                "Please confirm your email address before logging in. Check your inbox, or request a new confirmation email."),
             _ => new AuthenticationFailedException("Incorrect email or password."),
         };
     }

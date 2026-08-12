@@ -10,13 +10,15 @@ namespace Waypoint.Community.Application.RemoveReportedContent;
 public sealed record RemoveReportedContentCommand(Guid ReportId) : IRequest;
 
 public sealed class RemoveReportedContentCommandHandler(
-    ICommunityRepository repository, IAuditSink auditSink, ICurrentUserAccessor currentUser)
+    ICommunityRepository repository, IAuditSink auditSink, ICurrentUserAccessor currentUser, INotificationSink notificationSink)
     : IRequestHandler<RemoveReportedContentCommand>
 {
     public async Task Handle(RemoveReportedContentCommand request, CancellationToken cancellationToken)
     {
         var report = await repository.GetReportByIdAsync(request.ReportId, cancellationToken)
             ?? throw new NotFoundException("Report not found.");
+
+        Guid? removedContentAuthorId = null;
 
         switch (report.EntityType)
         {
@@ -26,6 +28,7 @@ public sealed class RemoveReportedContentCommandHandler(
                 {
                     post.DeletedAt = DateTimeOffset.UtcNow;
                     await repository.SavePostAsync(post, cancellationToken);
+                    removedContentAuthorId = post.UserId;
                 }
                 break;
 
@@ -35,6 +38,7 @@ public sealed class RemoveReportedContentCommandHandler(
                 {
                     comment.DeletedAt = DateTimeOffset.UtcNow;
                     await repository.SaveCommentAsync(comment, cancellationToken);
+                    removedContentAuthorId = comment.UserId;
                 }
                 break;
 
@@ -49,5 +53,22 @@ public sealed class RemoveReportedContentCommandHandler(
         await auditSink.RecordAsync(
             new AuditEntry("ContentReport", report.Id, "ContentRemovedByAdmin", currentUser.UserId, null, DateTimeOffset.UtcNow),
             cancellationToken);
+
+        // Moderation notifications always fire, unlike CommunityActivity/MentorshipActivity ones —
+        // a user should always know when their own content was removed, regardless of any activity
+        // preference. Best-effort: this only reaches here after the removal + audit entry already
+        // succeeded, so a notification failure never blocks the actual moderation action.
+        if (removedContentAuthorId is { } authorId)
+        {
+            await notificationSink.SendAsync(
+                new NotificationToSend(
+                    authorId,
+                    NotificationCategories.Moderation,
+                    "Your content was removed",
+                    "A moderator removed content you posted for violating community guidelines.",
+                    "/app/community",
+                    DateTimeOffset.UtcNow),
+                cancellationToken);
+        }
     }
 }

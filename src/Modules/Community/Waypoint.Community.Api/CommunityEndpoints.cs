@@ -58,8 +58,11 @@ public static class CommunityEndpoints
             return Results.NoContent();
         });
 
+        // Moderator policy (Admin or Moderator role) — see docs/PRODUCTION_READINESS_AUDIT.md's
+        // Authorization section. The moderation queue is exactly the kind of scoped, high-volume
+        // work a least-privilege Moderator role exists for.
         var admin = app.MapGroup("/api/v1/admin/moderation")
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Moderator")
             .RequireRateLimiting("api")
             .WithTags("Admin");
 

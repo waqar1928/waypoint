@@ -14,9 +14,11 @@ public class SelectDreamDirectionCommandHandlerTests
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly IPublisher _publisher = Substitute.For<IPublisher>();
     private readonly IAuditSink _auditSink = Substitute.For<IAuditSink>();
+    private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
 
-    private SelectDreamDirectionCommandHandler CreateHandler() => new(_repository, _currentUser, _publisher, _auditSink);
+    private SelectDreamDirectionCommandHandler CreateHandler() =>
+        new(_repository, _currentUser, _publisher, _auditSink, _analyticsSink);
 
     private static SelectDreamDirectionCommand BuildCommand() => new(
         "Help small manufacturers cut waste", "Cut waste for small manufacturers",

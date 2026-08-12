@@ -26,6 +26,13 @@ services:
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=waypoint;Username=waypoint;Password=${POSTGRES_PASSWORD:-waypoint_dev_password}"
       Waypoint__WebAppBaseUrl: ${WEB_APP_BASE_URL:-http://localhost:3030}
       Waypoint__AutoMigrate: "true"
+      # Without this, Waypoint Coach fails on every request inside this compose
+      # stack (AnthropicAiService throws AiServiceUnavailableException) — see
+      # docs/PRODUCTION_READINESS_AUDIT.md section 19. Set ANTHROPIC_API_KEY in
+      # your shell or a .env file next to this compose file before running
+      # `docker compose up`; left unset, Coach fails gracefully, everything
+      # else works normally.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "5080:8080"
     depends_on:

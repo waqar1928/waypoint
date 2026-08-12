@@ -15,11 +15,12 @@ public class StartConversationCommandHandlerTests
     private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly IBusinessIdeaSummaryProvider _businessIdeaSummaryProvider = Substitute.For<IBusinessIdeaSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
+    private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _dreamId = Guid.NewGuid();
 
     private StartConversationCommandHandler CreateHandler() =>
-        new(_repository, _aiService, _dreamSummaryProvider, _businessIdeaSummaryProvider, _currentUser);
+        new(_repository, _aiService, _dreamSummaryProvider, _businessIdeaSummaryProvider, _currentUser, _analyticsSink);
 
     private void ArrangeSignedInUser(DreamSummary? dream)
     {

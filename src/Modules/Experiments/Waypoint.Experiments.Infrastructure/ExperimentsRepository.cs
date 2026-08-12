@@ -49,4 +49,11 @@ public sealed class ExperimentsRepository(ExperimentsDbContext db) : IExperiment
         db.ExperimentResults.Add(result);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteAllForDreamAsync(Guid dreamId, CancellationToken cancellationToken)
+    {
+        var experimentIds = await db.Experiments.Where(e => e.DreamId == dreamId).Select(e => e.Id).ToListAsync(cancellationToken);
+        await db.ExperimentResults.Where(r => experimentIds.Contains(r.ExperimentId)).ExecuteDeleteAsync(cancellationToken);
+        await db.Experiments.Where(e => e.DreamId == dreamId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

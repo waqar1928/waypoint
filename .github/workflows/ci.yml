@@ -21,6 +21,19 @@ jobs:
       - name: Restore
         run: dotnet restore Waypoint.sln
 
+      # `dotnet list package --vulnerable` never sets a non-zero exit code even when it finds
+      # something (confirmed empirically — a real gotcha, not an assumption) — grep the output
+      # ourselves and fail explicitly, or this step would silently pass forever regardless of
+      # what it finds. See docs/PRODUCTION_READINESS_AUDIT.md's CI/CD section: this is new, not
+      # previously checked anywhere in CI.
+      - name: Check for vulnerable NuGet packages
+        run: |
+          dotnet list Waypoint.sln package --vulnerable --include-transitive | tee /tmp/nuget-vuln.txt
+          if grep -q "has the following vulnerable packages" /tmp/nuget-vuln.txt; then
+            echo "::error::Vulnerable NuGet package(s) found — see output above."
+            exit 1
+          fi
+
       - name: Build
         run: dotnet build Waypoint.sln --no-restore --configuration Release
 
@@ -61,6 +74,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Unlike dotnet's vulnerable-package check, npm audit already exits non-zero (moderate
+      # severity or higher, by default) when it finds something — no extra grep needed here. See
+      # docs/PRODUCTION_READINESS_AUDIT.md's CI/CD section: this is new, not previously checked.
+      - name: Check for vulnerable npm packages
+        run: npm audit --omit=dev
+
       - name: Lint
         run: npm run lint
 
@@ -69,3 +88,24 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  docker:
+    name: Docker (build both images)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub-hosted ubuntu-latest runners have Docker pre-installed, so
+      # this genuinely builds both Dockerfiles rather than just asserting
+      # they parse — real verification, since neither image has ever been
+      # built in any sandbox this project's development happened in (no
+      # Docker daemon available there). Doesn't push anywhere or need
+      # ANTHROPIC_API_KEY — that's a runtime env var, not a build input.
+      - name: Build API image
+        run: docker build -f apps/api/Waypoint.Api/Dockerfile -t waypoint-api:ci .
+
+      - name: Build web image
+        run: docker build -f apps/web/Dockerfile -t waypoint-web:ci apps/web
+
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet

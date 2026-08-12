@@ -15,7 +15,11 @@ public sealed class DeleteAccountCommandValidator : AbstractValidator<DeleteAcco
 }
 
 public sealed class DeleteAccountCommandHandler(
-    IIdentityService identityService, ICurrentUserAccessor currentUser, IPublisher publisher)
+    IIdentityService identityService,
+    ICurrentUserAccessor currentUser,
+    IPublisher publisher,
+    IAuditSink auditSink,
+    IDreamSummaryProvider dreamSummaryProvider)
     : IRequestHandler<DeleteAccountCommand>
 {
     public async Task Handle(DeleteAccountCommand request, CancellationToken cancellationToken)
@@ -28,6 +32,11 @@ public sealed class DeleteAccountCommandHandler(
             throw new AuthenticationFailedException("Incorrect password.");
         }
 
+        // Resolved and snapshotted *before* the account is actually deleted — see
+        // UserDeletedIntegrationEvent's own doc comment for exactly why every Dream-keyed module's
+        // cascade-delete handler needs this passed on the event rather than re-resolving it live.
+        var dreamSummary = await dreamSummaryProvider.GetForUserAsync(userId, cancellationToken);
+
         await identityService.SignOutAsync(cancellationToken);
 
         var result = await identityService.DeleteUserAsync(userId, cancellationToken);
@@ -36,6 +45,15 @@ public sealed class DeleteAccountCommandHandler(
             throw new ConflictException("We couldn't delete your account. Please try again.");
         }
 
-        await publisher.Publish(new UserDeletedIntegrationEvent(userId), cancellationToken);
+        // A real, irreversible action that had no audit trail at all — see
+        // docs/PRODUCTION_READINESS_AUDIT.md's Authentication/Audit Logging sections. The Audit
+        // module has no foreign key back to Identity's user table (separate schema, no
+        // cross-module relational integrity per this codebase's module boundary rules), so this
+        // entry correctly survives the user record it references being gone.
+        await auditSink.RecordAsync(
+            new AuditEntry("User", userId, "AccountDeleted", userId, null, DateTimeOffset.UtcNow),
+            cancellationToken);
+
+        await publisher.Publish(new UserDeletedIntegrationEvent(userId, dreamSummary?.DreamId), cancellationToken);
     }
 }

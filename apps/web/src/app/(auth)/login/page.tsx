@@ -15,9 +15,12 @@ import { apiMutate, invalidateCsrfToken } from "@/lib/api-client";
 export default function LoginPage() {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
@@ -26,6 +29,8 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginInput) => {
     setFormError(null);
+    setNeedsVerification(false);
+    setResendState("idle");
     const response = await apiMutate("/api/auth/login", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -40,11 +45,31 @@ export default function LoginPage() {
     }
 
     const payload = await response.json().catch(() => null);
+    // Distinct from every other login failure: the password was actually correct, the account
+    // just hasn't confirmed its email yet (see EmailNotConfirmedException) — offer a real recovery
+    // action instead of the generic "wrong password" message.
+    if (isProblemDetails(payload) && payload.type === "https://waypoint.app/errors/email-not-confirmed") {
+      setNeedsVerification(true);
+      setFormError(payload.detail ?? "Please confirm your email address before logging in.");
+      return;
+    }
     setFormError(
       isProblemDetails(payload) && payload.detail
         ? payload.detail
         : "That email and password don't match. Please try again.",
     );
+  };
+
+  const onResendVerification = async () => {
+    setResendState("sending");
+    await apiMutate("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: getValues("email") }),
+    });
+    // The API always returns success here regardless of account state (anti-enumeration, same
+    // shape as forgot-password) — this UI reflects that by always showing "sent", never an error.
+    setResendState("sent");
   };
 
   return (
@@ -88,6 +113,24 @@ export default function LoginPage() {
           <p role="alert" className="text-sm text-merlot-600">
             {formError}
           </p>
+        ) : null}
+
+        {needsVerification ? (
+          resendState === "sent" ? (
+            <p className="text-sm text-ink-700">
+              If that account needs confirming, a new email is on its way.
+            </p>
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              isLoading={resendState === "sending"}
+              onClick={onResendVerification}
+            >
+              Resend confirmation email
+            </Button>
+          )
         ) : null}
 
         <Button type="submit" className="w-full" isLoading={isSubmitting}>

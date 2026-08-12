@@ -37,7 +37,11 @@ public sealed class SelectDreamDirectionCommandValidator : AbstractValidator<Sel
 /// the onboarding UX is deliberately built to encourage focus first.
 /// </summary>
 public sealed class SelectDreamDirectionCommandHandler(
-    IDreamRepository repository, ICurrentUserAccessor currentUser, IPublisher publisher, IAuditSink auditSink)
+    IDreamRepository repository,
+    ICurrentUserAccessor currentUser,
+    IPublisher publisher,
+    IAuditSink auditSink,
+    IProductAnalyticsSink analyticsSink)
     : IRequestHandler<SelectDreamDirectionCommand, DreamDto>
 {
     public async Task<DreamDto> Handle(SelectDreamDirectionCommand request, CancellationToken cancellationToken)
@@ -59,6 +63,20 @@ public sealed class SelectDreamDirectionCommandHandler(
         await auditSink.RecordAsync(
             new AuditEntry("Dream", dream.Id, "Created", userId, null, DateTimeOffset.UtcNow), cancellationToken);
         await publisher.Publish(new OnboardingCompletedIntegrationEvent(userId), cancellationToken);
+
+        // This handler is also, today, the exact moment onboarding completes (see the integration
+        // event published above) — both fire together rather than needing a second subscriber
+        // wired just to detect "onboarding done" (see docs/PRODUCTION_READINESS_AUDIT.md's
+        // Analytics section).
+        var occurredAt = DateTimeOffset.UtcNow;
+        await analyticsSink.TrackAsync(
+            new AnalyticsEvent(
+                AnalyticsEvents.DreamCreated, userId,
+                new Dictionary<string, string> { ["isBusinessShaped"] = request.IsBusinessShaped.ToString() },
+                occurredAt),
+            cancellationToken);
+        await analyticsSink.TrackAsync(
+            new AnalyticsEvent(AnalyticsEvents.OnboardingCompleted, userId, null, occurredAt), cancellationToken);
 
         return ToDto(dream);
     }

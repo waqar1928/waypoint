@@ -17,7 +17,10 @@ public sealed class CreateCommentCommandValidator : AbstractValidator<CreateComm
 }
 
 public sealed class CreateCommentCommandHandler(
-    ICommunityRepository repository, IProfileSummaryProvider profileSummaryProvider, ICurrentUserAccessor currentUser)
+    ICommunityRepository repository,
+    IProfileSummaryProvider profileSummaryProvider,
+    ICurrentUserAccessor currentUser,
+    INotificationSink notificationSink)
     : IRequestHandler<CreateCommentCommand, CommentDto>
 {
     public async Task<CommentDto> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
@@ -34,6 +37,22 @@ public sealed class CreateCommentCommandHandler(
 
         var comment = Comment.Create(request.PostId, userId, request.Body);
         await repository.AddCommentAsync(comment, cancellationToken);
+
+        // Notify the post's author, but never notify someone about their own comment on their own
+        // post — a real, low-frequency, high-signal event worth surfacing (see
+        // docs/PRODUCTION_READINESS_AUDIT.md's Notifications module writeup).
+        if (post.UserId != userId)
+        {
+            await notificationSink.SendAsync(
+                new NotificationToSend(
+                    post.UserId,
+                    NotificationCategories.CommunityActivity,
+                    "New comment on your post",
+                    request.Body.Length > 140 ? request.Body[..140] + "…" : request.Body,
+                    "/app/community",
+                    DateTimeOffset.UtcNow),
+                cancellationToken);
+        }
 
         var author = await AuthorResolver.ResolveAsync(profileSummaryProvider, userId, cancellationToken);
         return CommentDto.From(comment, author, userId);

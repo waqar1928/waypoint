@@ -55,8 +55,11 @@ public static class MentorshipEndpoints
         group.MapPost("/help-requests/{helpRequestId:guid}/close", async (Guid helpRequestId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new CloseHelpRequestCommand(helpRequestId), ct)));
 
+        // Moderator policy (Admin or Moderator role) — see docs/PRODUCTION_READINESS_AUDIT.md's
+        // Authorization section. Mentor verification is scoped, high-volume work, same reasoning
+        // as the Community moderation queue.
         var admin = app.MapGroup("/api/v1/admin/mentors")
-            .RequireAuthorization("Admin")
+            .RequireAuthorization("Moderator")
             .RequireRateLimiting("api")
             .WithTags("Admin");
 

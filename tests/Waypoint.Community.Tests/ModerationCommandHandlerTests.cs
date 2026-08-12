@@ -74,13 +74,16 @@ public class RemoveReportedContentCommandHandlerTests
     private readonly ICommunityRepository _repository = Substitute.For<ICommunityRepository>();
     private readonly IAuditSink _auditSink = Substitute.For<IAuditSink>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
+    private readonly INotificationSink _notificationSink = Substitute.For<INotificationSink>();
 
-    private RemoveReportedContentCommandHandler CreateHandler() => new(_repository, _auditSink, _currentUser);
+    private RemoveReportedContentCommandHandler CreateHandler() =>
+        new(_repository, _auditSink, _currentUser, _notificationSink);
 
     [Fact]
     public async Task Soft_deletes_a_reported_post_and_marks_the_report_content_removed()
     {
-        var post = CommunityPost.Create(Guid.NewGuid(), null, "Spam post", PostVisibility.Public);
+        var authorId = Guid.NewGuid();
+        var post = CommunityPost.Create(authorId, null, "Spam post", PostVisibility.Public);
         var report = ContentReportRecord.Create(ReportableEntityTypes.Post, post.Id, Guid.NewGuid(), "spam", null);
         _repository.GetReportByIdAsync(report.Id, Arg.Any<CancellationToken>()).Returns(report);
         _repository.GetPostByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
@@ -90,12 +93,16 @@ public class RemoveReportedContentCommandHandlerTests
         post.DeletedAt.Should().NotBeNull();
         report.Status.Should().Be(ReportStatus.ContentRemoved);
         await _repository.Received(1).SavePostAsync(post, Arg.Any<CancellationToken>());
+        await _notificationSink.Received(1).SendAsync(
+            Arg.Is<NotificationToSend>(n => n.RecipientUserId == authorId && n.Category == NotificationCategories.Moderation),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Soft_deletes_a_reported_comment_and_marks_the_report_content_removed()
     {
-        var comment = Comment.Create(Guid.NewGuid(), Guid.NewGuid(), "Spam comment");
+        var authorId = Guid.NewGuid();
+        var comment = Comment.Create(Guid.NewGuid(), authorId, "Spam comment");
         var report = ContentReportRecord.Create(ReportableEntityTypes.Comment, comment.Id, Guid.NewGuid(), "spam", null);
         _repository.GetReportByIdAsync(report.Id, Arg.Any<CancellationToken>()).Returns(report);
         _repository.GetCommentByIdAsync(comment.Id, Arg.Any<CancellationToken>()).Returns(comment);
@@ -105,6 +112,8 @@ public class RemoveReportedContentCommandHandlerTests
         comment.DeletedAt.Should().NotBeNull();
         report.Status.Should().Be(ReportStatus.ContentRemoved);
         await _repository.Received(1).SaveCommentAsync(comment, Arg.Any<CancellationToken>());
+        await _notificationSink.Received(1).SendAsync(
+            Arg.Is<NotificationToSend>(n => n.RecipientUserId == authorId), Arg.Any<CancellationToken>());
     }
 
     [Fact]

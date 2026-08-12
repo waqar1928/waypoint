@@ -50,4 +50,9 @@ public sealed class ActionsRepository(ActionsDbContext db) : IActionsRepository
             .Where(a => a.DreamId == dreamId && a.IsNextBestAction && a.Id != exceptActionId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.IsNextBestAction, false), cancellationToken);
     }
+
+    public async Task DeleteAllForDreamAsync(Guid dreamId, CancellationToken cancellationToken)
+    {
+        await db.Actions.Where(a => a.DreamId == dreamId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

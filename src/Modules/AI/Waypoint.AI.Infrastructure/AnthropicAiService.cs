@@ -79,30 +79,7 @@ public sealed class AnthropicAiService(
             ApplyPlaceholders(template.SystemPrompt, request.Variables),
             messages);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/messages")
-        {
-            Content = JsonContent.Create(payload, options: JsonOptions),
-        };
-        httpRequest.Headers.Add("x-api-key", apiKey);
-        httpRequest.Headers.Add("anthropic-version", "2023-06-01");
-
-        HttpResponseMessage httpResponse;
-        try
-        {
-            httpResponse = await httpClient.SendAsync(httpRequest, cancellationToken);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogError(ex, "Anthropic API call failed for conversation {ConversationId}", request.ConversationId);
-            throw new AiServiceUnavailableException("Waypoint Coach couldn't reach the AI service right now. Please try again.");
-        }
-
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            var body = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogError("Anthropic API returned {Status}: {Body}", httpResponse.StatusCode, body);
-            throw new AiServiceUnavailableException("Waypoint Coach couldn't get a response right now. Please try again.");
-        }
+        var httpResponse = await SendWithRetryAsync(payload, apiKey, request.ConversationId, cancellationToken);
 
         var result = await httpResponse.Content.ReadFromJsonAsync<AnthropicResponse>(JsonOptions, cancellationToken)
             ?? throw new AiServiceUnavailableException("Waypoint Coach returned an unreadable response.");
@@ -121,6 +98,78 @@ public sealed class AnthropicAiService(
             result.Usage.OutputTokens,
             result.Model,
             wasModerationFlagged);
+    }
+
+    // Bounded retry for transient failures only (network errors and 5xx) — never retries a 4xx,
+    // since that's the API telling us the request itself is wrong and retrying it would just fail
+    // the same way again. See docs/PRODUCTION_READINESS_AUDIT.md's AI/Security sections: this was
+    // a real gap (a single transient blip failed the whole AI turn immediately) that a hand-rolled
+    // bounded retry closes without pulling in a new dependency (Polly) for one call site.
+    private const int MaxAttempts = 3;
+    private static readonly TimeSpan[] RetryDelays = [TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(1500)];
+
+    private async Task<HttpResponseMessage> SendWithRetryAsync(
+        AnthropicRequest payload, string apiKey, Guid conversationId, CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
+        {
+            // HttpRequestMessage can only be sent once, so this has to be rebuilt every attempt
+            // rather than hoisted above the loop.
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/messages")
+            {
+                Content = JsonContent.Create(payload, options: JsonOptions),
+            };
+            httpRequest.Headers.Add("x-api-key", apiKey);
+            httpRequest.Headers.Add("anthropic-version", "2023-06-01");
+
+            HttpResponseMessage httpResponse;
+            try
+            {
+                httpResponse = await httpClient.SendAsync(httpRequest, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (attempt < MaxAttempts)
+            {
+                logger.LogWarning(ex,
+                    "Anthropic API call failed for conversation {ConversationId} (attempt {Attempt}/{MaxAttempts}), retrying",
+                    conversationId, attempt, MaxAttempts);
+                await Task.Delay(RetryDelays[attempt - 1], cancellationToken);
+                continue;
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError(ex, "Anthropic API call failed for conversation {ConversationId} after {MaxAttempts} attempts",
+                    conversationId, MaxAttempts);
+                throw new AiServiceUnavailableException("Waypoint Coach couldn't reach the AI service right now. Please try again.");
+            }
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                return httpResponse;
+            }
+
+            // 5xx is the API's own infrastructure having a bad moment — worth retrying. Anything
+            // else (400 bad request, 401 auth, 429 rate limit) reflects something about this
+            // specific request/account that a retry won't fix, so fail immediately instead of
+            // burning two more attempts (and, for 429, making the rate-limit situation worse).
+            var isRetryableStatus = (int)httpResponse.StatusCode >= 500;
+            if (isRetryableStatus && attempt < MaxAttempts)
+            {
+                logger.LogWarning(
+                    "Anthropic API returned {Status} for conversation {ConversationId} (attempt {Attempt}/{MaxAttempts}), retrying",
+                    httpResponse.StatusCode, conversationId, attempt, MaxAttempts);
+                httpResponse.Dispose();
+                await Task.Delay(RetryDelays[attempt - 1], cancellationToken);
+                continue;
+            }
+
+            var body = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogError("Anthropic API returned {Status}: {Body}", httpResponse.StatusCode, body);
+            throw new AiServiceUnavailableException("Waypoint Coach couldn't get a response right now. Please try again.");
+        }
+
+        // Unreachable — the loop above always either returns or throws on its final iteration —
+        // but the compiler can't prove that, so this satisfies the "all paths return" requirement.
+        throw new AiServiceUnavailableException("Waypoint Coach couldn't get a response right now. Please try again.");
     }
 
     private static string ApplyPlaceholders(string template, IReadOnlyDictionary<string, string> variables)

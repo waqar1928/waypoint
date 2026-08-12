@@ -21,6 +21,14 @@ public sealed class SendMessageCommandHandler(IAiRepository repository, IAiServi
 {
     private const int MaxOutputTokens = 800;
 
+    // Per-minute rate limiting (see the "ai" policy in Program.cs) bounds the *rate* of AI spend
+    // but not the *total size* of one long-running conversation — a single conversation left open
+    // for hours/days could still accumulate significant token cost without this. 100 user+assistant
+    // turns combined is generous for any of this app's AI use cases (coaching chat, one-shot Dream
+    // analysis, idea-challenge sessions) while still bounding worst-case cost per conversation. See
+    // docs/PRODUCTION_READINESS_AUDIT.md's AI section.
+    private const int MaxMessagesPerConversation = 100;
+
     private static readonly Dictionary<AiConversationTopic, string> ReplyTemplateKeys = new()
     {
         [AiConversationTopic.Coach] = "coach.v1",
@@ -35,6 +43,13 @@ public sealed class SendMessageCommandHandler(IAiRepository repository, IAiServi
         if (conversation is null || conversation.UserId != userId)
         {
             throw new NotFoundException("Conversation not found.");
+        }
+
+        var messageCount = await repository.GetMessageCountForConversationAsync(conversation.Id, cancellationToken);
+        if (messageCount >= MaxMessagesPerConversation)
+        {
+            throw new ConflictException(
+                "This conversation has reached its message limit. Start a new conversation to continue.");
         }
 
         var userMessage = AiMessage.Create(conversation.Id, userId, AiMessageRole.User, request.Content, null, null);

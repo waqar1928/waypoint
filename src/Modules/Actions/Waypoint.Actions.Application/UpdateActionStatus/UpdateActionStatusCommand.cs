@@ -18,7 +18,7 @@ public sealed class UpdateActionStatusCommandValidator : AbstractValidator<Updat
 
 public sealed class UpdateActionStatusCommandHandler(
     IActionsRepository repository, IDreamSummaryProvider dreamSummaryProvider,
-    ICurrentUserAccessor currentUser, IAuditSink auditSink)
+    ICurrentUserAccessor currentUser, IAuditSink auditSink, IProductAnalyticsSink analyticsSink)
     : IRequestHandler<UpdateActionStatusCommand, ActionDto>
 {
     public async Task<ActionDto> Handle(UpdateActionStatusCommand request, CancellationToken cancellationToken)
@@ -50,6 +50,8 @@ public sealed class UpdateActionStatusCommandHandler(
         {
             await auditSink.RecordAsync(
                 new AuditEntry("Action", action.Id, "Completed", userId, null, DateTimeOffset.UtcNow), cancellationToken);
+            await analyticsSink.TrackAsync(
+                new AnalyticsEvent(AnalyticsEvents.ActionCompleted, userId, null, DateTimeOffset.UtcNow), cancellationToken);
         }
 
         return ActionDto.From(action);

@@ -55,6 +55,13 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
                 Status = StatusCodes.Status423Locked,
                 Detail = locked.Message,
             },
+            EmailNotConfirmedException notConfirmed => new ProblemDetails
+            {
+                Type = "https://waypoint.app/errors/email-not-confirmed",
+                Title = "Email not confirmed",
+                Status = StatusCodes.Status403Forbidden,
+                Detail = notConfirmed.Message,
+            },
             AntiforgeryValidationException => new ProblemDetails
             {
                 Type = "https://waypoint.app/errors/csrf-token-invalid",

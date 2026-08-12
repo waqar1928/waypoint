@@ -57,7 +57,8 @@ public sealed class CreateMilestoneCommandHandler(
 }
 
 public sealed class MarkMilestoneAchievedCommandHandler(
-    IGoalsRepository repository, IDreamSummaryProvider dreamSummaryProvider, ICurrentUserAccessor currentUser)
+    IGoalsRepository repository, IDreamSummaryProvider dreamSummaryProvider,
+    ICurrentUserAccessor currentUser, IProductAnalyticsSink analyticsSink)
     : IRequestHandler<MarkMilestoneAchievedCommand, MilestoneDto>
 {
     public async Task<MilestoneDto> Handle(MarkMilestoneAchievedCommand request, CancellationToken cancellationToken)
@@ -76,6 +77,9 @@ public sealed class MarkMilestoneAchievedCommandHandler(
         milestone.UpdatedBy = userId;
 
         await repository.SaveMilestoneAsync(milestone, cancellationToken);
+
+        await analyticsSink.TrackAsync(
+            new AnalyticsEvent(AnalyticsEvents.MilestoneAchieved, userId, null, DateTimeOffset.UtcNow), cancellationToken);
 
         return GetMyMilestonesQueryHandler.ToDto(milestone);
     }

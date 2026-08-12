@@ -64,4 +64,26 @@ public class SendMessageCommandHandlerTests
             Arg.Is<AiRequest>(r => r.PromptTemplateKey == "challenge-my-idea.v1"), Arg.Any<CancellationToken>());
         await _repository.Received(1).SaveConversationAsync(conversation, Arg.Any<CancellationToken>());
     }
+
+    /// <summary>
+    /// Regression test for the per-conversation message cap added in the production-readiness
+    /// pass (see docs/PRODUCTION_READINESS_AUDIT.md's AI section) — per-minute rate limiting alone
+    /// doesn't bound the total size/cost of one long-running conversation, so a hard ceiling exists
+    /// as a second, independent control. Must fail fast (no AI call, no message stored) rather than
+    /// spending a billed API call and then discovering the conversation is already full.
+    /// </summary>
+    [Fact]
+    public async Task Throws_conflict_and_never_calls_the_ai_service_once_the_conversation_hits_its_message_cap()
+    {
+        _currentUser.UserId.Returns(_userId);
+        var conversation = AiConversation.Create(_userId, null, AiConversationTopic.Coach, null);
+        _repository.GetConversationByIdAsync(conversation.Id, Arg.Any<CancellationToken>()).Returns(conversation);
+        _repository.GetMessageCountForConversationAsync(conversation.Id, Arg.Any<CancellationToken>()).Returns(100);
+
+        var act = () => CreateHandler().Handle(new SendMessageCommand(conversation.Id, "One more thing"), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>();
+        await _aiService.DidNotReceive().CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>());
+        await _repository.DidNotReceive().AddMessageAsync(Arg.Any<AiMessage>(), Arg.Any<CancellationToken>());
+    }
 }

@@ -61,4 +61,23 @@ public class LoginCommandHandlerTests
 
         await act.Should().ThrowAsync<AccountLockedException>();
     }
+
+    [Fact]
+    public async Task Unconfirmed_email_throws_email_not_confirmed_exception_not_generic_auth_failure()
+    {
+        // Regression test for the production-readiness pass that added the RequireConfirmedAccount
+        // login gate — this outcome only fires when the password was actually correct (see
+        // IdentityService.PasswordSignInAsync's doc comment), so it must map to a distinct
+        // exception the frontend can use to offer a "resend verification email" action, not the
+        // same generic "wrong email or password" message a real invalid-credentials attempt gets.
+        var userId = Guid.NewGuid();
+        _identityService
+            .PasswordSignInAsync("alex@example.com", "correct", Arg.Any<CancellationToken>())
+            .Returns(new PasswordSignInResult(SignInOutcome.EmailNotConfirmed, userId, "alex@example.com"));
+
+        var act = () => CreateHandler().Handle(
+            new LoginCommand("alex@example.com", "correct"), CancellationToken.None);
+
+        await act.Should().ThrowAsync<EmailNotConfirmedException>();
+    }
 }

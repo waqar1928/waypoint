@@ -24,4 +24,12 @@ public sealed class DreamRepository(DreamsDbContext db) : IDreamRepository
 
     public async Task<IReadOnlyList<Dream>> GetAllAsync(int take, CancellationToken cancellationToken) =>
         await db.Dreams.AsNoTracking().Where(d => d.DeletedAt == null).OrderByDescending(d => d.CreatedAt).Take(take).ToListAsync(cancellationToken);
+
+    public async Task DeleteForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Deliberately not filtered on DeletedAt == null — a user with an already-soft-deleted
+        // dream should still have it actually purged on account deletion, not left behind because
+        // it wouldn't match a "still active" filter.
+        await db.Dreams.Where(d => d.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

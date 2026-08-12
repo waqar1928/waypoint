@@ -16,6 +16,7 @@ public enum SignInOutcome
     Success,
     InvalidCredentials,
     LockedOut,
+    EmailNotConfirmed,
 }
 
 public sealed record PasswordSignInResult(SignInOutcome Outcome, Guid? UserId, string? Email);
@@ -33,6 +34,12 @@ public interface IIdentityService
         string email, string password, CancellationToken cancellationToken);
 
     Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>Returns null if no account exists for the email OR the account is already
+    /// confirmed — callers must not leak either distinction to the client (same anti-enumeration
+    /// shape as GeneratePasswordResetTokenIfExistsAsync below).</summary>
+    Task<(Guid UserId, string Token)?> GenerateEmailConfirmationTokenIfUnconfirmedAsync(
+        string email, CancellationToken cancellationToken);
 
     Task<IdentityOperationResult> ConfirmEmailAsync(Guid userId, string token, CancellationToken cancellationToken);
 

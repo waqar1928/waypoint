@@ -106,4 +106,17 @@ public sealed class MentorshipRepository(MentorshipDbContext db) : IMentorshipRe
         db.HelpRequestResponses.Add(response);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        await db.MentorProfiles.Where(p => p.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+
+        // This user's own responses on other people's help requests — HelpRequestResponse
+        // cascades from HelpRequest at the DB level (see HelpRequestResponseConfiguration), so
+        // responses on this user's *own* requests get cleaned up automatically by the delete
+        // below; this covers the direction that cascade doesn't.
+        await db.HelpRequestResponses.Where(r => r.ResponderUserId == userId).ExecuteDeleteAsync(cancellationToken);
+
+        await db.HelpRequests.Where(h => h.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

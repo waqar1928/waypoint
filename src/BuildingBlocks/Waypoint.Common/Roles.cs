@@ -10,4 +10,14 @@ namespace Waypoint.Common;
 public static class Roles
 {
     public const string Admin = "Admin";
+
+    /// <summary>
+    /// Scoped to the moderation queue (dismiss/remove/resolve reports) and mentor verification
+    /// only — everything else under /api/v1/admin/* (user lock/unlock, dream oversight, AI usage,
+    /// the full audit log) still requires the full Admin role. See
+    /// docs/PRODUCTION_READINESS_AUDIT.md's Authorization section: previously every admin had
+    /// full platform power with no least-privilege separation. Same config-seeded, no-self-service
+    /// bootstrap as Admin (see RoleSeeder) — Waypoint:ModeratorEmails.
+    /// </summary>
+    public const string Moderator = "Moderator";
 }

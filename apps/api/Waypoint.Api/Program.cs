@@ -29,6 +29,8 @@ using Waypoint.Journal.Api;
 using Waypoint.Journal.Infrastructure;
 using Waypoint.Mentorship.Api;
 using Waypoint.Mentorship.Infrastructure;
+using Waypoint.Notifications.Api;
+using Waypoint.Notifications.Infrastructure;
 using Waypoint.Users.Api;
 using Waypoint.Users.Infrastructure;
 
@@ -70,6 +72,7 @@ builder.Services.AddBusinessIdeasModule(builder.Configuration);
 builder.Services.AddAiModule(builder.Configuration);
 builder.Services.AddCommunityModule(builder.Configuration);
 builder.Services.AddMentorshipModule(builder.Configuration);
+builder.Services.AddNotificationsModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
 // In-process only (not distributed) — sole current consumer is AnthropicAiService's prompt
@@ -78,6 +81,7 @@ builder.Services.AddMentorshipModule(builder.Configuration);
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
+builder.Services.AddSingleton<IProductAnalyticsSink, LoggingProductAnalyticsSink>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -98,6 +102,7 @@ var applicationAssemblies = new[]
     Assembly.Load("Waypoint.AI.Application"),
     Assembly.Load("Waypoint.Community.Application"),
     Assembly.Load("Waypoint.Mentorship.Application"),
+    Assembly.Load("Waypoint.Notifications.Application"),
 };
 
 builder.Services.AddMediatR(cfg =>
@@ -108,7 +113,15 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssemblies(applicationAssemblies);
 
 builder.Services.AddAuthorization(options =>
-    options.AddPolicy("Admin", policy => policy.RequireRole(Waypoint.Common.Roles.Admin)));
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole(Waypoint.Common.Roles.Admin));
+    // Admin can do everything Moderator can (superset) — see
+    // docs/PRODUCTION_READINESS_AUDIT.md's Authorization section. Only the moderation-queue and
+    // mentor-verification endpoint groups use this policy; every other /api/v1/admin/* group
+    // (user lock/unlock, dream oversight, AI usage, the full audit log) still requires "Admin".
+    options.AddPolicy("Moderator", policy =>
+        policy.RequireRole(Waypoint.Common.Roles.Admin, Waypoint.Common.Roles.Moderator));
+});
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -124,9 +137,27 @@ var webAppBaseUrl = builder.Configuration["Waypoint:WebAppBaseUrl"]
 builder.Services.AddCors(options =>
     options.AddPolicy("WebApp", policy => policy
         .WithOrigins(webAppBaseUrl)
-        .AllowAnyHeader()
-        .AllowAnyMethod()
+        // Origin restriction above is the load-bearing control (this API is only ever meant to be
+        // called by the Next.js BFF, and server-to-server calls aren't subject to CORS at all —
+        // this policy only matters for a browser trying to hit the API directly). Narrowed from
+        // AllowAnyHeader/AllowAnyMethod to the exact set apps/web's proxy.ts and api-client.ts
+        // actually send, per docs/PRODUCTION_READINESS_AUDIT.md's security section: every
+        // AllowAny* needs a documented reason, and here there wasn't one.
+        .WithMethods("GET", "POST", "PUT", "DELETE")
+        .WithHeaders("Content-Type", "X-CSRF-TOKEN")
         .AllowCredentials()));
+
+// Permit limits are configurable (Waypoint:RateLimits:Auth/Api/Ai) rather than hardcoded, with
+// these exact values as the defaults if unset — production behavior is unchanged unless an
+// operator explicitly overrides one. This was added specifically because the integration test
+// suite's WaypointApiFactory needs a higher "auth" limit than production: every request in that
+// in-process TestServer reports the same loopback IP, so a growing number of legitimate
+// multi-step auth flows (register → verify → login, etc.) sharing one partition key started
+// tripping the real 10/minute production limit — a genuine test-infrastructure consequence of
+// this pass's real email-verification-gate work, not a reason to weaken the production default.
+var authRateLimit = builder.Configuration.GetValue("Waypoint:RateLimits:Auth", 10);
+var apiRateLimit = builder.Configuration.GetValue("Waypoint:RateLimits:Api", 100);
+var aiRateLimit = builder.Configuration.GetValue("Waypoint:RateLimits:Ai", 20);
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -137,7 +168,7 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions
         {
             Window = TimeSpan.FromMinutes(1),
-            PermitLimit = 10,
+            PermitLimit = authRateLimit,
             QueueLimit = 0,
         }));
 
@@ -146,7 +177,7 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions
         {
             Window = TimeSpan.FromMinutes(1),
-            PermitLimit = 100,
+            PermitLimit = apiRateLimit,
             QueueLimit = 0,
         }));
 
@@ -156,7 +187,7 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions
         {
             Window = TimeSpan.FromMinutes(1),
-            PermitLimit = 20,
+            PermitLimit = aiRateLimit,
             QueueLimit = 0,
         }));
 });
@@ -190,6 +221,11 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("X-Frame-Options", "DENY");
     context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    // Same value GlobalExceptionHandler already puts in every Problem Details error body's
+    // "traceId" field — surfaced here as a header too so it's available on every response
+    // (success or failure), not just error bodies, for support/debugging workflows that want to
+    // reference a specific request without needing to parse a JSON error payload first.
+    context.Response.Headers.Append("X-Correlation-Id", context.TraceIdentifier);
     await next();
 });
 
@@ -212,6 +248,7 @@ app.MapAiEndpoints();
 app.MapCommunityEndpoints();
 app.MapMentorshipEndpoints();
 app.MapAuditEndpoints();
+app.MapNotificationsEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });

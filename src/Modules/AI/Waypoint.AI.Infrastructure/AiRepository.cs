@@ -39,6 +39,13 @@ public sealed class AiRepository(AiDbContext db) : IAiRepository
             .OrderBy(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    /// <summary>A dedicated COUNT query rather than reusing GetMessagesForConversationAsync().Count
+    /// — SendMessageCommandHandler's per-conversation cap check (see
+    /// docs/PRODUCTION_READINESS_AUDIT.md's AI section) runs on every single message and shouldn't
+    /// pull every message body into memory just to count rows.</summary>
+    public Task<int> GetMessageCountForConversationAsync(Guid conversationId, CancellationToken cancellationToken) =>
+        db.Messages.CountAsync(m => m.ConversationId == conversationId, cancellationToken);
+
     public async Task AddMessageAsync(AiMessage message, CancellationToken cancellationToken)
     {
         db.Messages.Add(message);
@@ -78,5 +85,13 @@ public sealed class AiRepository(AiDbContext db) : IAiRepository
             .ToList();
 
         return new AiUsageSummaryDto(totalConversations, totalMessages, totalTokens, byTopic);
+    }
+
+    public async Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Postgres enforces AiMessage's ON DELETE CASCADE FK regardless of how the DELETE is
+        // issued — a raw client-evaluated DELETE via ExecuteDeleteAsync triggers it exactly the
+        // same as any other delete, so Messages don't need their own explicit query here.
+        await db.Conversations.Where(c => c.UserId == userId).ExecuteDeleteAsync(cancellationToken);
     }
 }

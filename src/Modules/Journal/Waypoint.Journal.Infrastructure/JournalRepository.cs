@@ -20,4 +20,11 @@ public sealed class JournalRepository(JournalDbContext db) : IJournalRepository
             .OrderByDescending(e => e.CreatedAt)
             .Take(take)
             .ToListAsync(cancellationToken);
+
+    public async Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Not filtered on DeletedAt == null — every entry for this user gets actually purged,
+        // including any already soft-deleted ones a normal read would already be hiding.
+        await db.JournalEntries.Where(e => e.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

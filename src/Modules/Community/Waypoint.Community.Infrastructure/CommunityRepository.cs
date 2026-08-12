@@ -120,4 +120,19 @@ public sealed class CommunityRepository(CommunityDbContext db) : ICommunityRepos
         }
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var ownPostIds = await db.Posts.Where(p => p.UserId == userId).Select(p => p.Id).ToListAsync(cancellationToken);
+
+        // Every comment on this user's own posts, regardless of who wrote them — the post is
+        // about to be gone, so a comment on it makes no sense left behind.
+        await db.Comments.Where(c => ownPostIds.Contains(c.PostId)).ExecuteDeleteAsync(cancellationToken);
+
+        // This user's own comments on posts they don't own (already covered above if they did).
+        await db.Comments.Where(c => c.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+
+        await db.Posts.Where(p => p.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await db.ContentReports.Where(r => r.ReporterUserId == userId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

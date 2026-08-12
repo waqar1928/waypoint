@@ -51,7 +51,12 @@ export function PostComposer({ onCreate }: { onCreate: (values: CreatePostInput)
           >
             <option value="private">Only me</option>
             <option value="community">Waypoint community</option>
-            <option value="public">Public (coming soon)</option>
+            {/* Not actually "coming soon" — the backend already handles Public, it just isn't
+                distinct from Community yet since there's no unauthenticated/external viewing
+                surface (see ICommunityRepository's doc comment). The old label claimed a broken
+                feature; this one describes what Public actually does today without overclaiming
+                it means "visible outside Waypoint," which it doesn't yet. */}
+            <option value="public">Public (visible to all members, same as Community for now)</option>
           </select>
         </div>
         <Button type="submit" isLoading={isSubmitting}>

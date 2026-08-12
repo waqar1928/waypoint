@@ -13,6 +13,10 @@
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Application\Waypoint.Audit.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Infrastructure\Waypoint.Audit.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Audit\Waypoint.Audit.Api\Waypoint.Audit.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Waypoint.Notifications.Domain\Waypoint.Notifications.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Waypoint.Notifications.Application\Waypoint.Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Waypoint.Notifications.Infrastructure\Waypoint.Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Notifications\Waypoint.Notifications.Api\Waypoint.Notifications.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Domain\Waypoint.Dreams.Domain.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Application\Waypoint.Dreams.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Dreams\Waypoint.Dreams.Infrastructure\Waypoint.Dreams.Infrastructure.csproj" />

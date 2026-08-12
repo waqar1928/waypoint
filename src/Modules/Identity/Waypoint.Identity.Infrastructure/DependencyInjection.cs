@@ -28,6 +28,14 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                // A real user must prove they own the email address before they can log in — see
+                // docs/PRODUCTION_READINESS_AUDIT.md's Authentication section. Registration and
+                // password-reset flows already work unaffected by this; it only gates login.
+                // SignInManager.PasswordSignInAsync's PreSignInCheck enforces this by returning
+                // SignInResult.NotAllowed (mapped to SignInOutcome.EmailNotConfirmed in
+                // IdentityService.PasswordSignInAsync) once the password has already checked out
+                // correctly for an unconfirmed account.
+                options.SignIn.RequireConfirmedAccount = true;
             })
             .AddEntityFrameworkStores<WaypointIdentityDbContext>()
             .AddDefaultTokenProviders();
@@ -56,9 +64,23 @@ public static class DependencyInjection
 
         services.Configure<IdentityLinkOptions>(configuration.GetSection("Waypoint"));
         services.AddScoped<IIdentityService, IdentityService>();
-        services.AddScoped<IEmailSender, LoggingEmailSender>();
+
+        // Only registers real SMTP delivery once an operator explicitly configures a mail host —
+        // see SmtpEmailSender's own doc comment for why this stays opt-in rather than defaulting
+        // to "on". A deployment with nothing configured keeps the safe logging behavior instead of
+        // silently failing every send.
+        services.Configure<SmtpOptions>(configuration.GetSection("Email:Smtp"));
+        if (!string.IsNullOrWhiteSpace(configuration["Email:Smtp:Host"]))
+        {
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
+        }
+        else
+        {
+            services.AddScoped<IEmailSender, LoggingEmailSender>();
+        }
+
         services.AddScoped<IStartupMigrator, IdentityStartupMigrator>();
-        services.AddScoped<IStartupMigrator, AdminRoleSeeder>();
+        services.AddScoped<IStartupMigrator, RoleSeeder>();
 
         return services;
     }

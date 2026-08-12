@@ -9,6 +9,7 @@ public sealed class RegisterUserCommandHandler(
     IEmailSender emailSender,
     IPublisher publisher,
     IAuditSink auditSink,
+    IProductAnalyticsSink analyticsSink,
     IOptions<IdentityLinkOptions> linkOptions)
     : IRequestHandler<RegisterUserCommand, RegisterUserResult>
 {
@@ -23,6 +24,9 @@ public sealed class RegisterUserCommandHandler(
 
         await auditSink.RecordAsync(
             new AuditEntry("User", userId.Value, "Registered", userId.Value, null, DateTimeOffset.UtcNow),
+            cancellationToken);
+        await analyticsSink.TrackAsync(
+            new AnalyticsEvent(AnalyticsEvents.UserRegistered, userId.Value, null, DateTimeOffset.UtcNow),
             cancellationToken);
 
         var token = await identityService.GenerateEmailConfirmationTokenAsync(userId.Value, cancellationToken);

@@ -4,10 +4,12 @@ import {
   createHelpRequestSchema,
   createPostSchema,
   dreamStatementSchema,
+  forgotPasswordSchema,
   loginSchema,
   profileSchema,
   registerSchema,
   reportContentSchema,
+  resetPasswordSchema,
 } from "./validation";
 
 describe("registerSchema", () => {
@@ -56,6 +58,38 @@ describe("loginSchema", () => {
   it("rejects an empty password even though login has no strength requirement", () => {
     const result = loginSchema.safeParse({ email: "alex@example.com", password: "" });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("forgotPasswordSchema", () => {
+  it("accepts a valid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "alex@example.com" }).success).toBe(true);
+  });
+
+  it("rejects an invalid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "not-an-email" }).success).toBe(false);
+  });
+
+  it("rejects an empty email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "" }).success).toBe(false);
+  });
+});
+
+describe("resetPasswordSchema", () => {
+  it("accepts a password meeting the same strength rule as registration", () => {
+    expect(resetPasswordSchema.safeParse({ newPassword: "GoodPass123" }).success).toBe(true);
+  });
+
+  it("rejects a password shorter than 10 characters", () => {
+    expect(resetPasswordSchema.safeParse({ newPassword: "Short1" }).success).toBe(false);
+  });
+
+  it("rejects a password with no uppercase letter", () => {
+    expect(resetPasswordSchema.safeParse({ newPassword: "lowercase123" }).success).toBe(false);
+  });
+
+  it("rejects a password with no digit", () => {
+    expect(resetPasswordSchema.safeParse({ newPassword: "NoDigitsHere" }).success).toBe(false);
   });
 });
 

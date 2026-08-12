@@ -17,7 +17,10 @@ public sealed class RespondToHelpRequestCommandValidator : AbstractValidator<Res
 }
 
 public sealed class RespondToHelpRequestCommandHandler(
-    IMentorshipRepository repository, IProfileSummaryProvider profileSummaryProvider, ICurrentUserAccessor currentUser)
+    IMentorshipRepository repository,
+    IProfileSummaryProvider profileSummaryProvider,
+    ICurrentUserAccessor currentUser,
+    INotificationSink notificationSink)
     : IRequestHandler<RespondToHelpRequestCommand, HelpRequestResponseDto>
 {
     public async Task<HelpRequestResponseDto> Handle(RespondToHelpRequestCommand request, CancellationToken cancellationToken)
@@ -39,6 +42,22 @@ public sealed class RespondToHelpRequestCommandHandler(
             helpRequest.Status = HelpRequestStatus.Answered;
             helpRequest.UpdatedBy = userId;
             await repository.SaveHelpRequestAsync(helpRequest, cancellationToken);
+        }
+
+        // Notify the requester, but never notify someone about their own reply on their own
+        // request (a mentor can also ask a clarifying question on someone else's answer, but the
+        // requester replying to their own thread shouldn't self-notify).
+        if (helpRequest.UserId != userId)
+        {
+            await notificationSink.SendAsync(
+                new NotificationToSend(
+                    helpRequest.UserId,
+                    NotificationCategories.MentorshipActivity,
+                    "New response to your help request",
+                    request.Body.Length > 140 ? request.Body[..140] + "…" : request.Body,
+                    "/app/mentorship",
+                    DateTimeOffset.UtcNow),
+                cancellationToken);
         }
 
         var responder = await PersonResolver.ResolveAsync(profileSummaryProvider, userId, cancellationToken);

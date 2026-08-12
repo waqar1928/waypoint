@@ -37,4 +37,11 @@ public sealed class BusinessIdeasRepository(BusinessIdeasDbContext db) : IBusine
         db.BusinessValidations.Add(validation);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteForDreamAsync(Guid dreamId, CancellationToken cancellationToken)
+    {
+        var ideaIds = await db.BusinessIdeas.Where(i => i.DreamId == dreamId).Select(i => i.Id).ToListAsync(cancellationToken);
+        await db.BusinessValidations.Where(v => ideaIds.Contains(v.BusinessIdeaId)).ExecuteDeleteAsync(cancellationToken);
+        await db.BusinessIdeas.Where(i => i.DreamId == dreamId).ExecuteDeleteAsync(cancellationToken);
+    }
 }

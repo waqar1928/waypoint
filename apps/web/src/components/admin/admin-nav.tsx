@@ -16,17 +16,25 @@ import {
 } from "lucide-react";
 
 const adminNavItems = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Dreams", href: "/admin/dreams", icon: Compass },
-  { label: "Moderation", href: "/admin/moderation", icon: Flag },
-  { label: "Mentors", href: "/admin/mentors", icon: HeartHandshake },
-  { label: "AI Usage", href: "/admin/ai-usage", icon: Sparkles },
-  { label: "System Health", href: "/admin/system-health", icon: ScrollText },
+  { label: "Overview", href: "/admin", icon: LayoutDashboard, adminOnly: true },
+  { label: "Users", href: "/admin/users", icon: Users, adminOnly: true },
+  { label: "Dreams", href: "/admin/dreams", icon: Compass, adminOnly: true },
+  { label: "Moderation", href: "/admin/moderation", icon: Flag, adminOnly: false },
+  { label: "Mentors", href: "/admin/mentors", icon: HeartHandshake, adminOnly: false },
+  { label: "AI Usage", href: "/admin/ai-usage", icon: Sparkles, adminOnly: true },
+  { label: "System Health", href: "/admin/system-health", icon: ScrollText, adminOnly: true },
 ];
 
-export function AdminNav() {
+/**
+ * isAdmin=false, isModerator=true means a Moderator-only account (see
+ * docs/PRODUCTION_READINESS_AUDIT.md's Authorization section) — only Moderation and Mentors are
+ * ever authorized for that role on the backend, so this hides the rest rather than showing links
+ * that would just 403. This is a UX nicety, not the security boundary — the backend's "Moderator"
+ * policy is what actually enforces this regardless of what the nav shows.
+ */
+export function AdminNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
+  const visibleItems = isAdmin ? adminNavItems : adminNavItems.filter((item) => !item.adminOnly);
 
   return (
     <>
@@ -46,7 +54,7 @@ export function AdminNav() {
           Back to app
         </Link>
         <ul className="flex flex-1 flex-col gap-1">
-          {adminNavItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <li key={item.href}>
@@ -71,7 +79,7 @@ export function AdminNav() {
         aria-label="Admin"
         className="fixed inset-x-0 top-16 z-10 flex overflow-x-auto border-b border-ink-300 bg-paper-raised md:hidden"
       >
-        {adminNavItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link

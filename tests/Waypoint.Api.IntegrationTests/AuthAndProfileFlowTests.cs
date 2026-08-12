@@ -1,11 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using FluentAssertions;
 using Xunit;
 
 namespace Waypoint.Api.IntegrationTests;
 
-public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture<WaypointApiFactory>
+public partial class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture<WaypointApiFactory>
 {
     private async Task<(HttpClient Client, string CsrfToken)> CreateClientWithCsrfTokenAsync()
     {
@@ -25,6 +26,23 @@ public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture
         return request;
     }
 
+    [GeneratedRegex(@"userId=([0-9a-fA-F-]+)&token=([^""]+)")]
+    private static partial Regex VerificationLinkPattern();
+
+    /// <summary>
+    /// Pulls the real userId/token pair out of the most recently captured verification email for
+    /// the given address — the same values a real user would get from clicking the link in their
+    /// inbox, not a faked/shortcut token. See WaypointApiFactory.EmailSender /
+    /// CapturingEmailSender for why a real inbox isn't needed to test this for real.
+    /// </summary>
+    private (string UserId, string Token) ExtractVerificationLink(string toEmail)
+    {
+        var email = factory.EmailSender.SentEmails.Last(e => e.ToEmail == toEmail);
+        var match = VerificationLinkPattern().Match(email.HtmlBody);
+        match.Success.Should().BeTrue("the confirmation email should contain a verify-email link");
+        return (match.Groups[1].Value, Uri.UnescapeDataString(match.Groups[2].Value));
+    }
+
     [Fact]
     public async Task Register_then_login_then_read_profile_then_logout_end_to_end()
     {
@@ -35,6 +53,14 @@ public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture
             HttpMethod.Post, "/api/v1/auth/register", csrfToken,
             new { displayName = "Alex Rivera", email, password = "GoodPass123" }));
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // A real user must confirm their email before they can log in (see
+        // docs/PRODUCTION_READINESS_AUDIT.md's Authentication section) — mirror that here using
+        // the real token from the captured confirmation email, not a shortcut around the gate.
+        var (userId, token) = ExtractVerificationLink(email);
+        var confirmResponse = await client.SendAsync(MutatingRequest(
+            HttpMethod.Post, "/api/v1/auth/verify-email", csrfToken, new { userId, token }));
+        confirmResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var loginResponse = await client.SendAsync(MutatingRequest(
             HttpMethod.Post, "/api/v1/auth/login", csrfToken,
@@ -59,6 +85,42 @@ public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture
 
         var profileAfterLogout = await client.GetAsync("/api/v1/me/profile");
         profileAfterLogout.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Login_before_confirming_email_is_rejected_and_resend_then_confirm_then_login_succeeds()
+    {
+        var (client, csrfToken) = await CreateClientWithCsrfTokenAsync();
+        var email = $"alex+{Guid.NewGuid():N}@example.com";
+
+        var registerResponse = await client.SendAsync(MutatingRequest(
+            HttpMethod.Post, "/api/v1/auth/register", csrfToken,
+            new { displayName = "Alex Rivera", email, password = "GoodPass123" }));
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Right password, unconfirmed account — must be rejected with the specific
+        // email-not-confirmed error, not a generic auth failure (see
+        // docs/PRODUCTION_READINESS_AUDIT.md's Authentication section).
+        var blockedLoginResponse = await client.SendAsync(MutatingRequest(
+            HttpMethod.Post, "/api/v1/auth/login", csrfToken, new { email, password = "GoodPass123" }));
+        blockedLoginResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var problem = await blockedLoginResponse.Content.ReadFromJsonAsync<ProblemDetailsResponse>();
+        problem!.Type.Should().Be("https://waypoint.app/errors/email-not-confirmed");
+
+        // Resend must produce a new, real, usable confirmation link — not just a 202 with nothing
+        // behind it.
+        var resendResponse = await client.SendAsync(
+            MutatingRequest(HttpMethod.Post, "/api/v1/auth/resend-verification", csrfToken, new { email }));
+        resendResponse.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        var (userId, token) = ExtractVerificationLink(email);
+        var confirmResponse = await client.SendAsync(MutatingRequest(
+            HttpMethod.Post, "/api/v1/auth/verify-email", csrfToken, new { userId, token }));
+        confirmResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginResponse = await client.SendAsync(MutatingRequest(
+            HttpMethod.Post, "/api/v1/auth/login", csrfToken, new { email, password = "GoodPass123" }));
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -97,4 +159,5 @@ public class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClassFixture
 
     private sealed record CsrfTokenResponse(string Token);
     private sealed record ProfileResponse(Guid UserId, string DisplayName);
+    private sealed record ProblemDetailsResponse(string Type, string Title, int Status, string? Detail);
 }

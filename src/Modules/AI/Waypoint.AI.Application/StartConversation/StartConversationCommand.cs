@@ -20,7 +20,8 @@ public sealed class StartConversationCommandHandler(
     IAiService aiService,
     IDreamSummaryProvider dreamSummaryProvider,
     IBusinessIdeaSummaryProvider businessIdeaSummaryProvider,
-    ICurrentUserAccessor currentUser)
+    ICurrentUserAccessor currentUser,
+    IProductAnalyticsSink analyticsSink)
     : IRequestHandler<StartConversationCommand, ConversationDto>
 {
     private const int MaxOutputTokens = 800;
@@ -34,6 +35,12 @@ public sealed class StartConversationCommandHandler(
 
         var conversation = AiConversation.Create(userId, dream?.DreamId, request.Topic, title: null);
         await repository.AddConversationAsync(conversation, cancellationToken);
+        await analyticsSink.TrackAsync(
+            new AnalyticsEvent(
+                AnalyticsEvents.AiConversationStarted, userId,
+                new Dictionary<string, string> { ["topic"] = request.Topic.ToString() },
+                DateTimeOffset.UtcNow),
+            cancellationToken);
 
         // The conversation row has to exist before the AI call so its Id is available to pass
         // through — but if the call then fails, clean it back up rather than leaving an empty,

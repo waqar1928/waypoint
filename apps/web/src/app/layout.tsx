@@ -18,10 +18,20 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const title = "Waypoint — Turn your dream into a plan you can act on";
+const description =
+  "Waypoint is the operating system for turning dreams into action: discover what you want, define why it matters, validate it cheaply, and always know your next best step.";
+
 export const metadata: Metadata = {
-  title: "Waypoint — Turn your dream into a plan you can act on",
-  description:
-    "Waypoint is the operating system for turning dreams into action: discover what you want, define why it matters, validate it cheaply, and always know your next best step.",
+  // Required for Open Graph/Twitter's relative-URL resolution and for sitemap.ts/robots.ts's
+  // absolute URLs — previously unset entirely (see docs/PRODUCTION_READINESS_AUDIT.md's SEO
+  // section). No public asset for an og:image exists yet, so this intentionally doesn't reference
+  // one — a broken image link would be worse than no image.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3030"),
+  title,
+  description,
+  openGraph: { title, description, type: "website", siteName: "Waypoint" },
+  twitter: { card: "summary", title, description },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

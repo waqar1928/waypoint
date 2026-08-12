@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getMyConversations, getConversationMessages } from "@/lib/coach";
 import { CoachWorkspace } from "@/components/coach/coach-workspace";
 import type { AiConversationTopic, Conversation } from "@/lib/coach";
@@ -27,6 +28,13 @@ export default async function CoachPage({
       <p className="mt-2 text-ink-700">
         A collaborative guide, not a verdict — Coach asks questions and offers suggestions, but the
         decisions are always yours.
+      </p>
+      <p className="mt-1 text-sm text-ink-500">
+        Coach is an AI, not a human advisor, and its answers aren&apos;t guaranteed to be right.{" "}
+        <Link href="/ai-disclosure" className="text-beacon-600 hover:underline">
+          How Coach works and what happens to what you type
+        </Link>
+        .
       </p>
       <div className="mt-8">
         <CoachWorkspace

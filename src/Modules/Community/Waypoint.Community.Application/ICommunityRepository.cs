@@ -32,4 +32,16 @@ public interface ICommunityRepository
     Task<IReadOnlyList<ContentReportRecord>> GetOpenReportsAsync(CancellationToken cancellationToken);
     Task<ContentReportRecord?> GetReportByIdAsync(Guid reportId, CancellationToken cancellationToken);
     Task SaveReportAsync(ContentReportRecord report, CancellationToken cancellationToken);
+
+    /// <summary>Real hard delete of everything this user is the owner of — backs account deletion
+    /// (see docs/PRODUCTION_READINESS_AUDIT.md's Data Protection section). Covers three
+    /// relationships, since Community has no DB-level cascade between any of these tables (see
+    /// CommunityPostConfiguration/CommentConfiguration — only indexes, no HasOne/WithOne/OnDelete):
+    /// every comment on this user's own posts (regardless of who wrote them, since the post is
+    /// gone), this user's own comments on other people's posts, this user's own posts, and every
+    /// report this user filed (ReporterUserId). Deliberately does NOT chase down and delete
+    /// reports *about* this user's now-deleted content — those remain a valid historical
+    /// moderation record even once their target is gone, same reasoning as why Audit log entries
+    /// survive the user they reference (see DeleteAccountCommandHandler's own comment on that).</summary>
+    Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken);
 }

@@ -20,10 +20,12 @@ public class MarkMilestoneAchievedCommandHandlerTests
     private readonly IGoalsRepository _repository = Substitute.For<IGoalsRepository>();
     private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
+    private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _dreamId = Guid.NewGuid();
 
-    private MarkMilestoneAchievedCommandHandler CreateHandler() => new(_repository, _dreamSummaryProvider, _currentUser);
+    private MarkMilestoneAchievedCommandHandler CreateHandler() =>
+        new(_repository, _dreamSummaryProvider, _currentUser, _analyticsSink);
 
     private void ArrangeSignedInUserWithDream()
     {

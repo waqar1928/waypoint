@@ -14,6 +14,17 @@ out/
 .env.local
 .env.*.local
 
+# Secrets / credentials — defense-in-depth beyond .env (see
+# docs/PRODUCTION_READINESS_AUDIT.md security section). Nothing here has ever been committed
+# (verified via repo-wide grep as part of that audit) but the net was thinner than it should be.
+secrets.json
+appsettings.*.local.json
+*.pem
+*.key
+*.pfx
+credentials.json
+credentials.*.json
+
 # OS
 .DS_Store
 

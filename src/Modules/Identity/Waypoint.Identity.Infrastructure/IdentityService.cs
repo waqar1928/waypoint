@@ -27,6 +27,19 @@ public sealed class IdentityService(
         return await userManager.GenerateEmailConfirmationTokenAsync(user);
     }
 
+    public async Task<(Guid UserId, string Token)?> GenerateEmailConfirmationTokenIfUnconfirmedAsync(
+        string email, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null || user.EmailConfirmed)
+        {
+            return null;
+        }
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        return (user.Id, token);
+    }
+
     public async Task<IdentityOperationResult> ConfirmEmailAsync(
         Guid userId, string token, CancellationToken cancellationToken)
     {
@@ -56,6 +69,17 @@ public sealed class IdentityService(
         if (result.Succeeded)
         {
             return new PasswordSignInResult(SignInOutcome.Success, user.Id, user.Email);
+        }
+
+        // IsNotAllowed only fires once the password has already checked out (see
+        // Microsoft.AspNetCore.Identity.SignInManager's PreSignInCheck, called after password
+        // validation) and RequireConfirmedAccount rejected the sign-in — i.e. exactly the "right
+        // password, unconfirmed email" case, never a wrong-password case. Checked before
+        // IsLockedOut/default so a not-yet-confirmed account gets the more specific, more
+        // actionable message.
+        if (result.IsNotAllowed)
+        {
+            return new PasswordSignInResult(SignInOutcome.EmailNotConfirmed, user.Id, user.Email);
         }
 
         return result.IsLockedOut

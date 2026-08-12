@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Waypoint.Identity.Application;
 using Xunit;
 
 namespace Waypoint.Api.IntegrationTests;
@@ -57,10 +60,39 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
     // Program.cs, so setting one here (in InitializeAsync, guaranteed by xUnit's IAsyncLifetime to
     // run before any test can trigger Program.Main() via CreateClient()) is visible in time for
     // every module's eager connection-string read.
+    /// <summary>
+    /// Swapped in for the real IEmailSender so tests can complete the real email-verification
+    /// flow (register → read the real token out of the captured email → confirm → login) without
+    /// a real inbox. See CapturingEmailSender's own doc comment for why this exists — added once
+    /// RequireConfirmedAccount started actually blocking login for unconfirmed accounts.
+    /// </summary>
+    public CapturingEmailSender EmailSender { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         Environment.SetEnvironmentVariable("ConnectionStrings__Postgres", _connectionString);
         Environment.SetEnvironmentVariable("Waypoint__AutoMigrate", "true");
+
+        // Every request from this in-process TestServer reports the same loopback IP, so all
+        // tests in this suite share one "auth" rate-limit partition (see Program.cs's new
+        // Waypoint:RateLimits:Auth config option, added specifically for this). 200 is generous
+        // headroom for the whole suite's auth-flow tests without weakening the real production
+        // default (still 10/minute unless explicitly overridden) even slightly.
+        Environment.SetEnvironmentVariable("Waypoint__RateLimits__Auth", "200");
+
+        // A plain ConfigureServices callback here still runs after Program.cs's own DI
+        // registrations (WebApplicationFactory guarantees ConfigureWebHost's callbacks are the
+        // last word), so RemoveAll+re-add reliably overrides the real registration — unlike the
+        // connection-string case above, this isn't subject to the eager-read timing gotcha, since
+        // IEmailSender is only ever resolved from the container when a handler actually needs it
+        // (well after the host has fully started), not captured into a closure at registration
+        // time. (Microsoft.AspNetCore.TestHost's ConfigureTestServices would be the more
+        // conventional spelling of this, but isn't referenced by this test project.)
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(EmailSender);
+        });
     }
 
     // Diagnostic trail written to a file, not just Console — xUnit's own output capture around a

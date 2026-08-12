@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/profile";
 import { ProfileForm } from "@/components/app/profile-form";
+import { DeleteAccountSection } from "@/components/app/delete-account-section";
 
 export default async function ProfileSettingsPage() {
   const profile = await getProfile();
@@ -15,6 +16,7 @@ export default async function ProfileSettingsPage() {
         This is what Waypoint Coach will use to personalize your Dream Discovery.
       </p>
       <ProfileForm profile={profile} />
+      <DeleteAccountSection />
     </div>
   );
 }

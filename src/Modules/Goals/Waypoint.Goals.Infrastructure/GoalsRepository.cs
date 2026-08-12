@@ -86,4 +86,17 @@ public sealed class GoalsRepository(GoalsDbContext db) : IGoalsRepository
         }
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteAllForDreamAsync(Guid dreamId, CancellationToken cancellationToken)
+    {
+        // Mission has no DreamId column (only GoalId) — same two-step resolution
+        // GetMissionsForDreamAsync already uses, just feeding an ExecuteDeleteAsync instead of a
+        // final ToListAsync. Missions deleted before Goals (children before parent), though
+        // there's no DB-level FK between them to enforce that ordering — this module manages
+        // consistency at the application level, same as every other module in this codebase.
+        var goalIds = await db.Goals.Where(g => g.DreamId == dreamId).Select(g => g.Id).ToListAsync(cancellationToken);
+        await db.Missions.Where(m => goalIds.Contains(m.GoalId)).ExecuteDeleteAsync(cancellationToken);
+        await db.Milestones.Where(m => m.DreamId == dreamId).ExecuteDeleteAsync(cancellationToken);
+        await db.Goals.Where(g => g.DreamId == dreamId).ExecuteDeleteAsync(cancellationToken);
+    }
 }
