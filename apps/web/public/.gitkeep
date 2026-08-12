@@ -1,0 +1,8 @@
+Placeholder so this directory is tracked by git — git doesn't track empty
+directories, and a fresh checkout (e.g. GitHub Actions' actions/checkout)
+would otherwise never create apps/web/public/ at all. That broke the Docker
+build's `COPY --from=build /app/public ./public` step in CI with
+`"/app/public": not found` (the file it worked from locally the whole time,
+never actually committed) — see the CI run this was diagnosed from for the
+full story. Next.js expects this directory to exist even if empty (static
+assets like favicon.ico would normally live here).
