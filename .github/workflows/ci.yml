@@ -89,23 +89,55 @@ jobs:
       - name: Build
         run: npm run build
 
-  docker:
-    name: Docker (build both images)
+  # Split into two independent jobs rather than one job building both images sequentially.
+  # The combined job intermittently failed on "Build web image" with a bare "exit code 1" and no
+  # further detail in the logs GitHub's UI/API expose without repo-admin rights (confirmed: the
+  # job-logs download endpoint 403s "Must have admin rights to Repository" even for a public repo
+  # — the same access limitation hit earlier building this CI workflow in the first place). Local
+  # reproduction was inconclusive: both a native arm64 build and an emulated linux/amd64 build
+  # (via Docker Desktop's QEMU backend) succeeded on retry, after one QEMU run hit an unrelated
+  # "qemu: uncaught target signal 11" — a known artifact of running native Rust/V8 tooling
+  # (Turbopack) under user-mode emulation, not evidence of a real bug. The API image build is
+  # large (mcr.microsoft.com/dotnet/sdk base + the full solution) and ran immediately before the
+  # web build in the same job/runner/disk — a plausible, untested explanation is resource pressure
+  # (disk or memory) carried over from the first build starving the second, since GitHub-hosted
+  # runners have finite local disk. Splitting removes that whole class of interference regardless
+  # of whether it was the actual cause, and each job also dumps disk/image diagnostics so a real
+  # failure next time leaves real evidence instead of a bare exit code.
+  docker-api:
+    name: Docker (build API image)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub-hosted ubuntu-latest runners have Docker pre-installed, so
-      # this genuinely builds both Dockerfiles rather than just asserting
-      # they parse — real verification, since neither image has ever been
-      # built in any sandbox this project's development happened in (no
-      # Docker daemon available there). Doesn't push anywhere or need
-      # ANTHROPIC_API_KEY — that's a runtime env var, not a build input.
       - name: Build API image
         run: docker build -f apps/api/Waypoint.Api/Dockerfile -t waypoint-api:ci .
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          echo "--- disk ---"; df -h
+          echo "--- images ---"; docker images
+
+  docker-web:
+    name: Docker (build web image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Build web image
         run: docker build -f apps/web/Dockerfile -t waypoint-web:ci apps/web
 
+      - name: Diagnostics
+        if: always()
+        run: |
+          echo "--- disk ---"; df -h
+          echo "--- images ---"; docker images
+
+  docker-compose-config:
+    name: Docker (validate docker-compose.yml)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Validate docker-compose.yml
         run: docker compose config --quiet
