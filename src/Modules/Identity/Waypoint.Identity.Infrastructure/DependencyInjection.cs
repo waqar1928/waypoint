@@ -42,7 +42,7 @@ public static class DependencyInjection
 
         services.ConfigureApplicationCookie(options =>
         {
-            options.Cookie.Name = "waypoint.auth";
+            options.Cookie.Name = "drevia.auth";
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Strict;
             // SameAsRequest (not Always) so local HTTP dev keeps working; a production deployment

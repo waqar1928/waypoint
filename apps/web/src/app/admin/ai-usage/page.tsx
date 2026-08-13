@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { getAiUsageSummary } from "@/lib/admin";
 
 const topicLabels: Record<string, string> = {
-  coach: "Waypoint Coach",
+  coach: "Drevia Coach",
   dreamAnalysis: "Dream Analysis",
   challengeMyIdea: "Challenge My Idea",
 };

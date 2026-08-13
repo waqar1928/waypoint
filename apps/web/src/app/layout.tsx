@@ -18,19 +18,18 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const title = "Waypoint — Turn your dream into a plan you can act on";
+const title = "Drevia | Turn your dream into your next move";
 const description =
-  "Waypoint is the operating system for turning dreams into action: discover what you want, define why it matters, validate it cheaply, and always know your next best step.";
+  "Drevia helps you turn ideas into clear goals, practical experiments, and next steps. Discover what you want, define why it matters, and always know what to do next.";
 
 export const metadata: Metadata = {
   // Required for Open Graph/Twitter's relative-URL resolution and for sitemap.ts/robots.ts's
-  // absolute URLs — previously unset entirely (see docs/PRODUCTION_READINESS_AUDIT.md's SEO
-  // section). No public asset for an og:image exists yet, so this intentionally doesn't reference
-  // one — a broken image link would be worse than no image.
+  // absolute URLs. No public asset for an og:image exists yet, so this intentionally doesn't
+  // reference one — a broken image link would be worse than no image.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3030"),
   title,
   description,
-  openGraph: { title, description, type: "website", siteName: "Waypoint" },
+  openGraph: { title, description, type: "website", siteName: "Drevia" },
   twitter: { card: "summary", title, description },
 };
 

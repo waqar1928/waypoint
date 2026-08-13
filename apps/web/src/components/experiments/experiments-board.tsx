@@ -75,7 +75,7 @@ export function ExperimentsBoard({ initialExperiments }: { initialExperiments: E
 
       {experiments.length === 0 ? (
         <p className="text-sm text-ink-500">
-          No experiments yet — add the smallest possible next step you can test.
+          No experiments yet. Add the smallest possible next step you can test.
         </p>
       ) : (
         <ul className="space-y-3">

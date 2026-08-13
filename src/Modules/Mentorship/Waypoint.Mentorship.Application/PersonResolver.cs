@@ -6,7 +6,7 @@ namespace Waypoint.Mentorship.Application;
 /// IProfileSummaryProvider the same way — mirrors Community.Application's AuthorResolver.</summary>
 internal static class PersonResolver
 {
-    private static PersonDto Fallback(Guid userId) => new(userId, "Waypoint member", null);
+    private static PersonDto Fallback(Guid userId) => new(userId, "Drevia member", null);
 
     public static async Task<PersonDto> ResolveAsync(
         IProfileSummaryProvider provider, Guid userId, CancellationToken cancellationToken)

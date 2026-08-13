@@ -50,7 +50,7 @@ public sealed class AnthropicAiService(
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             throw new AiServiceUnavailableException(
-                "Waypoint Coach isn't configured yet — the ANTHROPIC_API_KEY environment variable is missing.");
+                "Drevia Coach isn't configured yet. The ANTHROPIC_API_KEY environment variable is missing.");
         }
 
         var history = await db.Messages
@@ -82,7 +82,7 @@ public sealed class AnthropicAiService(
         var httpResponse = await SendWithRetryAsync(payload, apiKey, request.ConversationId, cancellationToken);
 
         var result = await httpResponse.Content.ReadFromJsonAsync<AnthropicResponse>(JsonOptions, cancellationToken)
-            ?? throw new AiServiceUnavailableException("Waypoint Coach returned an unreadable response.");
+            ?? throw new AiServiceUnavailableException("Drevia Coach returned an unreadable response.");
 
         var text = string.Join("\n\n", result.Content.Where(c => c.Type == "text").Select(c => c.Text));
 
@@ -93,7 +93,7 @@ public sealed class AnthropicAiService(
         var wasModerationFlagged = string.IsNullOrWhiteSpace(text);
 
         return new AiResponse(
-            wasModerationFlagged ? "Coach didn't have a response for that — try rephrasing?" : text,
+            wasModerationFlagged ? "Coach didn't have a response for that. Try rephrasing?" : text,
             result.Usage.InputTokens,
             result.Usage.OutputTokens,
             result.Model,
@@ -139,7 +139,7 @@ public sealed class AnthropicAiService(
             {
                 logger.LogError(ex, "Anthropic API call failed for conversation {ConversationId} after {MaxAttempts} attempts",
                     conversationId, MaxAttempts);
-                throw new AiServiceUnavailableException("Waypoint Coach couldn't reach the AI service right now. Please try again.");
+                throw new AiServiceUnavailableException("Drevia Coach couldn't reach the AI service right now. Please try again.");
             }
 
             if (httpResponse.IsSuccessStatusCode)
@@ -164,12 +164,12 @@ public sealed class AnthropicAiService(
 
             var body = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
             logger.LogError("Anthropic API returned {Status}: {Body}", httpResponse.StatusCode, body);
-            throw new AiServiceUnavailableException("Waypoint Coach couldn't get a response right now. Please try again.");
+            throw new AiServiceUnavailableException("Drevia Coach couldn't get a response right now. Please try again.");
         }
 
         // Unreachable — the loop above always either returns or throws on its final iteration —
         // but the compiler can't prove that, so this satisfies the "all paths return" requirement.
-        throw new AiServiceUnavailableException("Waypoint Coach couldn't get a response right now. Please try again.");
+        throw new AiServiceUnavailableException("Drevia Coach couldn't get a response right now. Please try again.");
     }
 
     private static string ApplyPlaceholders(string template, IReadOnlyDictionary<string, string> variables)

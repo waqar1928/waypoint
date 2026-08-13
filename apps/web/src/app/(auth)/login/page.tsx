@@ -48,7 +48,7 @@ export default function LoginPage() {
     // Distinct from every other login failure: the password was actually correct, the account
     // just hasn't confirmed its email yet (see EmailNotConfirmedException) — offer a real recovery
     // action instead of the generic "wrong password" message.
-    if (isProblemDetails(payload) && payload.type === "https://waypoint.app/errors/email-not-confirmed") {
+    if (isProblemDetails(payload) && payload.type === "https://drevia.net/errors/email-not-confirmed") {
       setNeedsVerification(true);
       setFormError(payload.detail ?? "Please confirm your email address before logging in.");
       return;
@@ -139,7 +139,7 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-ink-700">
-        New to Waypoint?{" "}
+        New to Drevia?{" "}
         <Link href="/register" className="font-medium text-beacon-600 hover:underline">
           Find your dream
         </Link>

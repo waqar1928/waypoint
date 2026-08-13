@@ -22,7 +22,7 @@ export function ReportButton({ entityType, entityId }: { entityType: string; ent
   const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
 
   if (status === "sent") {
-    return <span className="text-xs text-ink-500">Reported — thanks for flagging this.</span>;
+    return <span className="text-xs text-ink-500">Reported. Thanks for flagging this.</span>;
   }
 
   if (!isOpen) {

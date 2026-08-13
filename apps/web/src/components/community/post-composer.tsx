@@ -50,12 +50,12 @@ export function PostComposer({ onCreate }: { onCreate: (values: CreatePostInput)
             {...register("visibility")}
           >
             <option value="private">Only me</option>
-            <option value="community">Waypoint community</option>
+            <option value="community">Drevia community</option>
             {/* Not actually "coming soon" — the backend already handles Public, it just isn't
                 distinct from Community yet since there's no unauthenticated/external viewing
                 surface (see ICommunityRepository's doc comment). The old label claimed a broken
                 feature; this one describes what Public actually does today without overclaiming
-                it means "visible outside Waypoint," which it doesn't yet. */}
+                it means "visible outside Drevia," which it doesn't yet. */}
             <option value="public">Public (visible to all members, same as Community for now)</option>
           </select>
         </div>

@@ -50,7 +50,7 @@ export function JournalPanel({ initialEntries }: { initialEntries: JournalEntry[
   return (
     <Card>
       <h2 className="font-display text-lg font-semibold text-ink-900">Journal</h2>
-      <p className="mt-1 text-sm text-ink-500">A private space for reflection — only you can see this.</p>
+      <p className="mt-1 text-sm text-ink-500">A private space for reflection. Only you can see this.</p>
 
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
         <select

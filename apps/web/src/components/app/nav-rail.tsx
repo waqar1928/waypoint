@@ -11,12 +11,12 @@ export function NavRail() {
 
   return (
     <nav
-      aria-label="Waypoint"
+      aria-label="Drevia"
       className="hidden w-64 shrink-0 flex-col bg-chart-900 px-4 py-6 text-paper md:flex"
     >
       <Link href="/" className="mb-8 flex items-center gap-2 px-2 font-display text-lg font-semibold">
         <Compass className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-        Waypoint
+        Drevia
       </Link>
       <ul className="flex flex-1 flex-col gap-1">
         {navItems.map((item) => {

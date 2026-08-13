@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         className="mb-8 flex items-center gap-2 font-display text-lg font-semibold text-ink-900"
       >
         <Compass className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-        Waypoint
+        Drevia
       </Link>
       <div className="w-full max-w-sm">{children}</div>
     </div>

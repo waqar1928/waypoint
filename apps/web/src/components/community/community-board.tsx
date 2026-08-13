@@ -42,7 +42,7 @@ export function CommunityBoard({ initialPosts }: { initialPosts: Post[] }) {
 
       {posts.length === 0 ? (
         <p className="text-sm text-ink-500">
-          No posts yet — be the first to share something with the Waypoint community.
+          No posts yet. Be the first to share something with the Drevia community.
         </p>
       ) : (
         <ul className="space-y-3">

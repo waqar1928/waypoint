@@ -49,7 +49,7 @@ export function PlanView({ initialPlan }: { initialPlan: Plan | null }) {
       <Card>
         <h2 className="font-display text-lg font-semibold text-ink-900">Draft your plan</h2>
         <p className="mt-1 text-sm text-ink-700">
-          We&rsquo;ll turn your Dream Statement into a 5-year vision down to a 90-day mission —
+          We&rsquo;ll turn your Dream Statement into a 5-year vision down to a 90-day mission,
           fully editable before you save anything.
         </p>
         {error ? (

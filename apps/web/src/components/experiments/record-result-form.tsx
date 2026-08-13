@@ -38,9 +38,9 @@ export function RecordResultForm({
       <div>
         <Label htmlFor="result-outcome">What happened?</Label>
         <select id="result-outcome" className={selectClasses} {...register("outcome")}>
-          <option value="validated">Validated — the hypothesis held up</option>
-          <option value="partiallyValidated">Partially validated — mixed signal</option>
-          <option value="invalidated">Invalidated — the hypothesis didn&rsquo;t hold up</option>
+          <option value="validated">Validated: the hypothesis held up</option>
+          <option value="partiallyValidated">Partially validated: mixed signal</option>
+          <option value="invalidated">Invalidated: the hypothesis didn&rsquo;t hold up</option>
         </select>
       </div>
 

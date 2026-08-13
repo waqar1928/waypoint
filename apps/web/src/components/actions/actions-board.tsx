@@ -76,7 +76,7 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
       )}
 
       {actions.length === 0 ? (
-        <p className="text-sm text-ink-500">No actions yet — add your first one above.</p>
+        <p className="text-sm text-ink-500">No actions yet. Add your first one above.</p>
       ) : (
         <ul className="space-y-3">
           {actions.map((action) => (

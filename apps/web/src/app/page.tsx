@@ -14,7 +14,7 @@ import { buttonClasses } from "@/components/ui/button";
 
 const arcStages = [
   { name: "Discover", description: "Conversational prompts surface your interests, strengths, and possible directions." },
-  { name: "Define", description: "Turn a direction into a clear Dream Statement — purpose, audience, and problem." },
+  { name: "Define", description: "Turn a direction into a clear Dream Statement: purpose, audience, and problem." },
   { name: "Validate", description: "Name your obstacles and test assumptions cheaply before you commit." },
   { name: "Plan", description: "Cascade the dream into a 90-day mission, a 30-day goal, and a next action." },
   { name: "Act", description: "A dream-native task system that always shows your Next Best Action." },
@@ -23,9 +23,9 @@ const arcStages = [
 const features = [
   {
     icon: MessageCircleQuestion,
-    title: "Waypoint Coach",
+    title: "Drevia Coach",
     description:
-      "An AI thinking partner that asks useful questions, challenges assumptions, and helps you break big goals into a next small step — never empty motivation.",
+      "An AI thinking partner that asks useful questions, challenges assumptions, and helps you break big goals into a next small step. Not empty motivation.",
   },
   {
     icon: Compass,
@@ -43,29 +43,29 @@ const features = [
     icon: Building2,
     title: "Business Builder",
     description:
-      "A focused workspace for business-shaped dreams: customer, problem, value proposition, pricing, risks — built for validation, not a 40-page plan.",
+      "A focused workspace for business-shaped dreams: customer, problem, value proposition, pricing, risks. Built for validation, not a 40-page plan.",
   },
   {
     icon: LineChart,
     title: "Momentum",
     description:
-      "Track actions taken, conversations had, and lessons learned — not just tasks checked off. Progress you can actually see.",
+      "Track actions taken, conversations had, and lessons learned, not just tasks checked off. Progress you can actually see.",
   },
 ];
 
 const faqs = [
   {
-    question: "Is Waypoint affiliated with any book or author?",
+    question: "Is Drevia affiliated with any book or author?",
     answer:
-      "No. Waypoint is an original product with its own terminology, questions, and exercises. It is not affiliated with, endorsed by, or associated with any author, book, or personal brand.",
+      "No. Drevia is an original product with its own terminology, questions, and exercises. It is not affiliated with, endorsed by, or associated with any author, book, or personal brand.",
   },
   {
     question: "Does the AI just tell me what to do?",
     answer:
-      "No. Waypoint Coach asks questions, surfaces blind spots, and suggests small experiments — decisions stay yours. Any AI-generated estimate is clearly labeled as decision support, not a guarantee.",
+      "No. Drevia Coach asks questions, surfaces blind spots, and suggests small experiments. Decisions stay yours. Any AI-generated estimate is clearly labeled as decision support, not a guarantee.",
   },
   {
-    question: "Do I need a business idea to use Waypoint?",
+    question: "Do I need a business idea to use Drevia?",
     answer:
       "No. Most people start with \"I don't know what I want to do.\" Discovery and Definition come before anything business-shaped, and plenty of dreams aren't businesses at all.",
   },
@@ -98,7 +98,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link href="#how-it-works" className={buttonClasses("secondary", "px-8 text-base")}>
-                See How Waypoint Works
+                See How It Works
               </Link>
             </div>
           </div>
@@ -108,11 +108,11 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl font-semibold text-ink-900">
-                The Waypoint Arc
+                How Drevia works
               </h2>
               <p className="mt-4 text-ink-700">
-                Every feature in Waypoint attaches to one stage of this arc, so you always know
-                where you are and what comes next.
+                Every feature attaches to one stage of this arc, so you always know where you are
+                and what comes next.
               </p>
             </div>
             <ol className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -157,10 +157,10 @@ export default function LandingPage() {
         <section className="border-y border-ink-300 bg-chart-900 py-20 text-paper">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-10">
             <p className="font-display text-2xl italic leading-relaxed sm:text-3xl">
-              &ldquo;Testimonials from early users will go here once Waypoint is in
+              &ldquo;Testimonials from early users will go here once Drevia is in
               private beta.&rdquo;
             </p>
-            <p className="mt-4 text-sm text-ink-300">— Placeholder, not a real testimonial</p>
+            <p className="mt-4 text-sm text-ink-300">Placeholder, not a real testimonial</p>
           </div>
         </section>
 
@@ -188,7 +188,7 @@ export default function LandingPage() {
               What should you do today?
             </h2>
             <p className="mt-4 text-beacon-100">
-              Start with one conversation. Waypoint helps you find the answer.
+              Start with one conversation. Drevia can help you think it through.
             </p>
             <Link
               href="/register"

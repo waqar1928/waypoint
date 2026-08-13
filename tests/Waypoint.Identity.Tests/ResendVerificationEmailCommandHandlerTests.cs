@@ -11,7 +11,7 @@ public class ResendVerificationEmailCommandHandlerTests
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
     private readonly IOptions<IdentityLinkOptions> _linkOptions =
-        Options.Create(new IdentityLinkOptions { WebAppBaseUrl = "https://waypoint.example" });
+        Options.Create(new IdentityLinkOptions { WebAppBaseUrl = "https://drevia.example" });
 
     private ResendVerificationEmailCommandHandler CreateHandler() =>
         new(_identityService, _emailSender, _linkOptions);

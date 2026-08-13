@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-ink-500 sm:px-6 lg:px-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            &copy; {new Date().getFullYear()} Waypoint. Not affiliated with, endorsed by, or
+            &copy; {new Date().getFullYear()} Drevia. Not affiliated with, endorsed by, or
             associated with any author, book, or personal brand.
           </p>
           <nav aria-label="Footer" className="flex gap-6">

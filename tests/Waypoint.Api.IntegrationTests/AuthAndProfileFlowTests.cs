@@ -105,7 +105,7 @@ public partial class AuthAndProfileFlowTests(WaypointApiFactory factory) : IClas
             HttpMethod.Post, "/api/v1/auth/login", csrfToken, new { email, password = "GoodPass123" }));
         blockedLoginResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         var problem = await blockedLoginResponse.Content.ReadFromJsonAsync<ProblemDetailsResponse>();
-        problem!.Type.Should().Be("https://waypoint.app/errors/email-not-confirmed");
+        problem!.Type.Should().Be("https://drevia.net/errors/email-not-confirmed");
 
         // Resend must produce a new, real, usable confirmation link — not just a 202 with nothing
         // behind it.

@@ -62,7 +62,7 @@ public sealed class HeuristicViabilityEstimateGenerator : IViabilityEstimateGene
 
         var weak = ViabilityFields
             .Where(f => string.IsNullOrWhiteSpace(f.Get(idea)))
-            .Select(f => $"You haven't worked out {f.Label} yet — that makes it hard to tell if this can make money.")
+            .Select(f => $"You haven't worked out {f.Label} yet. That makes it hard to tell if this can make money.")
             .ToList();
 
         var unknowns = CoreFields.Concat(OtherFields)
@@ -90,7 +90,7 @@ public sealed class HeuristicViabilityEstimateGenerator : IViabilityEstimateGene
 
         if (strong.Count == 0)
         {
-            strong.Add("Nothing filled in yet — this estimate will get more useful as you fill out the profile.");
+            strong.Add("Nothing filled in yet. This estimate will get more useful as you fill out the profile.");
         }
 
         return new ViabilityEstimateDraft(score, strong, weak, unknowns, experiments);

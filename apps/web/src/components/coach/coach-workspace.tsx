@@ -155,7 +155,7 @@ export function CoachWorkspace({
 
         {!active ? (
           <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-ink-500">
-            Start a conversation with Waypoint Coach — a collaborative guide, not a verdict.
+            Start a conversation with Drevia Coach, a collaborative guide, not a verdict.
           </div>
         ) : (
           <>

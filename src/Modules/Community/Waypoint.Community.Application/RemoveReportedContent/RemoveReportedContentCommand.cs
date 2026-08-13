@@ -44,7 +44,7 @@ public sealed class RemoveReportedContentCommandHandler(
 
             default:
                 throw new ConflictException(
-                    $"Content of type '{report.EntityType}' can't be removed from here — use Resolve instead.");
+                    $"Content of type '{report.EntityType}' can't be removed from here. Use Resolve instead.");
         }
 
         report.Status = ReportStatus.ContentRemoved;

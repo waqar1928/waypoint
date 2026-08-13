@@ -5,7 +5,7 @@ describe("isProblemDetails", () => {
   it("recognizes a well-formed RFC 7807 problem details body", () => {
     expect(
       isProblemDetails({
-        type: "https://waypoint.app/errors/validation-failed",
+        type: "https://drevia.net/errors/validation-failed",
         title: "Validation failed",
         status: 400,
       }),

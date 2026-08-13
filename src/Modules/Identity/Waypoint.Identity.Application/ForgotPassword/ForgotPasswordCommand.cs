@@ -38,7 +38,7 @@ public sealed class ForgotPasswordCommandHandler(
 
         await emailSender.SendAsync(
             request.Email,
-            "Reset your Waypoint password",
+            "Reset your Drevia password",
             $"""<p>Reset your password:</p><p><a href="{resetLink}">Reset password</a></p>""",
             cancellationToken);
     }

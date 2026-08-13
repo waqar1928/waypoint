@@ -13,8 +13,8 @@ public sealed class SmtpOptions
     public bool EnableSsl { get; set; } = true;
     public string? Username { get; set; }
     public string? Password { get; set; }
-    public string FromAddress { get; set; } = "no-reply@example.com";
-    public string FromName { get; set; } = "Waypoint";
+    public string FromAddress { get; set; } = "no-reply@drevia.net";
+    public string FromName { get; set; } = "Drevia";
 }
 
 /// <summary>

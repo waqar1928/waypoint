@@ -14,17 +14,17 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
     private static readonly IReadOnlyList<DreamDirectionDto> FallbackDirections =
     [
         new(
-            DirectionStatement: "Keep exploring — nothing here has to be decided yet.",
+            DirectionStatement: "Keep exploring. Nothing here has to be decided yet.",
             WhyItFits: "You can always come back to Discovery once you've had a chance to think.",
             SkillsPresent: "Whatever you bring to this is enough to start a conversation.",
             SkillsNeeded: "More clarity usually comes from doing something small, not from more thinking.",
-            Opportunities: "Most dreams start out vague — that's normal, not a problem.",
+            Opportunities: "Most dreams start out vague. That's normal, not a problem.",
             Challenges: "The main risk right now is waiting for certainty before you start.",
             FirstExperiment: "Talk to one person this week about what's been on your mind.",
             SuggestedBusinessShaped: false),
         new(
             DirectionStatement: "Revisit this once something's been on your mind for a few days.",
-            WhyItFits: "Some dreams need a bit of time to surface — that's normal too.",
+            WhyItFits: "Some dreams need a bit of time to surface. That's normal too.",
             SkillsPresent: "You don't need to have this figured out to start paying attention.",
             SkillsNeeded: "Mostly just noticing what keeps pulling at your attention.",
             Opportunities: "The next thing that annoys or excites you is worth writing down.",
@@ -34,7 +34,7 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
         new(
             DirectionStatement: "Talk to someone before deciding on a direction.",
             WhyItFits: "Sometimes clarity comes from a conversation, not more solo thinking.",
-            SkillsPresent: "You clearly care enough to be here — that's a real starting point.",
+            SkillsPresent: "You clearly care enough to be here. That's a real starting point.",
             SkillsNeeded: "Just someone willing to listen and ask you honest questions.",
             Opportunities: "An outside perspective often surfaces things you can't see yourself.",
             Challenges: "It can feel exposing to talk about something this undefined.",
@@ -51,10 +51,10 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
             directions.Add(new DreamDirectionDto(
                 DirectionStatement: $"Take on the problem you named: \"{Trim(a.ProblemToSolve)}\".",
                 WhyItFits: BuildWhyItFits(a, a.SpendTimeDoing, "you said you'd spend your time on this if you couldn't fail"),
-                SkillsPresent: SummarizeOrFallback(a.DoWithoutPay, "The things you already do without being asked are a starting signal — list them out."),
+                SkillsPresent: SummarizeOrFallback(a.DoWithoutPay, "The things you already do without being asked are a starting signal. List them out."),
                 SkillsNeeded: "Whatever's missing usually becomes clear once you talk to the first few people affected by this problem.",
                 Opportunities: "Nobody's solved this well yet, or you wouldn't still be thinking about it.",
-                Challenges: "Turning a problem you care about into something you actually build is the hard part — start small.",
+                Challenges: "Turning a problem you care about into something you actually build is the hard part. Start small.",
                 FirstExperiment: "Have three conversations this week with people who deal with this problem regularly.",
                 SuggestedBusinessShaped: !string.IsNullOrWhiteSpace(a.ProblemsNoticed)));
         }
@@ -64,10 +64,10 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
             directions.Add(new DreamDirectionDto(
                 DirectionStatement: $"Work on the change you described: \"{Trim(a.WhatWouldYouChange)}\".",
                 WhyItFits: BuildWhyItFits(a, a.ImpactOnOthers, "it lines up with the kind of impact you said you want to have"),
-                SkillsPresent: SummarizeOrFallback(a.AdmiredWork, "Think about what draws you to the people/work you admire — that's often a skill you already have or want."),
+                SkillsPresent: SummarizeOrFallback(a.AdmiredWork, "Think about what draws you to the people/work you admire. That's often a skill you already have or want."),
                 SkillsNeeded: "Talk to someone already working on something adjacent to this change.",
                 Opportunities: "Small, local versions of big changes are usually where people actually start.",
-                Challenges: "Big changes can feel too large to start — pick the smallest piece of it.",
+                Challenges: "Big changes can feel too large to start. Pick the smallest piece of it.",
                 FirstExperiment: "Write down the smallest version of this change you could attempt in the next 30 days.",
                 SuggestedBusinessShaped: false));
         }
@@ -77,10 +77,10 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
             directions.Add(new DreamDirectionDto(
                 DirectionStatement: BuildAdmiredDirection(a),
                 WhyItFits: BuildWhyItFits(a, a.FutureExperience, "it connects to the kind of experience you want to be able to talk about later"),
-                SkillsPresent: SummarizeOrFallback(a.TypicalWeek, "Look at how you already spend your time — some of this may already be underway."),
-                SkillsNeeded: "Whoever you admire started somewhere too — see if you can find out how.",
+                SkillsPresent: SummarizeOrFallback(a.TypicalWeek, "Look at how you already spend your time. Some of this may already be underway."),
+                SkillsNeeded: "Whoever you admire started somewhere too. See if you can find out how.",
                 Opportunities: "Being early and curious about something usually counts for more than people think.",
-                Challenges: "Admiration alone isn't a plan — the next step is finding your own angle on it.",
+                Challenges: "Admiration alone isn't a plan. The next step is finding your own angle on it.",
                 FirstExperiment: "Reach out to one person doing work you admire and ask how they started.",
                 SuggestedBusinessShaped: false));
         }
@@ -90,10 +90,10 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
             directions.Add(new DreamDirectionDto(
                 DirectionStatement: $"Explore what you said you'd do if money weren't a factor: \"{Trim(a.IfMoneyWerentFactor)}\".",
                 WhyItFits: BuildWhyItFits(a, a.RegretNeverTrying, "it's close to the thing you said you'd regret never trying"),
-                SkillsPresent: SummarizeOrFallback(a.DrainingWork, "Notice what this direction does NOT have in common with the work that drains you — that's a good sign."),
+                SkillsPresent: SummarizeOrFallback(a.DrainingWork, "Notice what this direction does NOT have in common with the work that drains you. That's a good sign."),
                 SkillsNeeded: "Whatever gap exists here is usually smaller once you start than it looks from the outside.",
                 Opportunities: "Things people would do without being paid often turn out to be things other people will pay for.",
-                Challenges: "It's easy to romanticize this direction — test it with something real before committing.",
+                Challenges: "It's easy to romanticize this direction. Test it with something real before committing.",
                 FirstExperiment: "Spend two hours this week actually doing this, and notice how it feels.",
                 SuggestedBusinessShaped: false));
         }
@@ -125,7 +125,7 @@ public sealed class HeuristicDreamDirectionGenerator : IDreamDirectionGenerator
         a.Feelings.Count > 0 ? string.Join(", ", a.Feelings) : "your own words";
 
     private static string SummarizeOrFallback(string? answer, string fallback) =>
-        string.IsNullOrWhiteSpace(answer) ? fallback : $"You mentioned: \"{Trim(answer)}\" — that's worth building on.";
+        string.IsNullOrWhiteSpace(answer) ? fallback : $"You mentioned: \"{Trim(answer)}\". That's worth building on.";
 
     private static string Trim(string? text)
     {

@@ -24,9 +24,9 @@ export default async function CoachPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
-      <h1 className="font-display text-3xl font-semibold text-ink-900">Waypoint Coach</h1>
+      <h1 className="font-display text-3xl font-semibold text-ink-900">Drevia Coach</h1>
       <p className="mt-2 text-ink-700">
-        A collaborative guide, not a verdict — Coach asks questions and offers suggestions, but the
+        A collaborative guide, not a verdict. Coach asks questions and offers suggestions, but the
         decisions are always yours.
       </p>
       <p className="mt-1 text-sm text-ink-500">

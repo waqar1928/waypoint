@@ -27,7 +27,7 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     key: "typicalWeek",
     stage: 1,
     prompt: "What does a typical week look like for you right now?",
-    placeholder: "Walk me through it — work, routines, the stuff in between.",
+    placeholder: "Walk me through it: work, routines, the stuff in between.",
   },
   {
     type: "chips",
@@ -63,7 +63,7 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     key: "admiredWork",
     stage: 1,
     prompt: "Whose work do you admire, and what specifically about it?",
-    placeholder: "A person, a company, a project — and why it stuck with you.",
+    placeholder: "A person, a company, a project, and why it stuck with you.",
   },
   {
     type: "text",

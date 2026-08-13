@@ -97,7 +97,7 @@ export function OnboardingWizard() {
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
       <div className="mb-8 flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
         <Compass className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-        Waypoint
+        Drevia
       </div>
 
       {phase === "questions" ? (
@@ -159,7 +159,7 @@ export function OnboardingWizard() {
             A few directions worth exploring
           </h1>
           <p className="mt-2 text-ink-700">
-            These are drafts built from your own words — not answers. Pick one to start shaping, or go back and
+            These are drafts built from your own words, not answers. Pick one to start shaping, or go back and
             share more.
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -178,7 +178,7 @@ export function OnboardingWizard() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Make it yours</h1>
           <p className="mt-2 text-ink-700">
-            Everything below is editable — change anything that doesn&rsquo;t sound like you.
+            Everything below is editable. Change anything that doesn&rsquo;t sound like you.
           </p>
           <div className="mt-8">
             <DreamStatementForm

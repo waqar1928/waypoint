@@ -35,8 +35,8 @@ public sealed class RegisterUserCommandHandler(
 
         await emailSender.SendAsync(
             request.Email,
-            "Confirm your Waypoint account",
-            $"""<p>Welcome to Waypoint. Confirm your email to get started:</p><p><a href="{verificationLink}">Confirm email</a></p>""",
+            "Confirm your Drevia account",
+            $"""<p>Thanks for signing up. Confirm your email to get started:</p><p><a href="{verificationLink}">Confirm email</a></p>""",
             cancellationToken);
 
         await publisher.Publish(

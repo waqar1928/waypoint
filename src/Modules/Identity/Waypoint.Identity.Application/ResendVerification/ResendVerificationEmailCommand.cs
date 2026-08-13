@@ -39,8 +39,8 @@ public sealed class ResendVerificationEmailCommandHandler(
 
         await emailSender.SendAsync(
             request.Email,
-            "Confirm your Waypoint account",
-            $"""<p>Confirm your email to log in to Waypoint:</p><p><a href="{verificationLink}">Confirm email</a></p>""",
+            "Confirm your Drevia account",
+            $"""<p>Confirm your email to log in to Drevia:</p><p><a href="{verificationLink}">Confirm email</a></p>""",
             cancellationToken);
     }
 }

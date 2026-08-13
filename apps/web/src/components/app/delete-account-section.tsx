@@ -52,7 +52,7 @@ export function DeleteAccountSection() {
     <div className="mt-12 rounded-2xl border border-merlot-300 bg-merlot-50 p-6">
       <h2 className="font-display text-lg font-semibold text-merlot-700">Delete account</h2>
       <p className="mt-2 text-sm text-merlot-700">
-        Permanently deletes your account and everything in it — your login, profile, Dream,
+        Permanently deletes your account and everything in it: your login, profile, Dream,
         journal, goals, actions, experiments, business plans, AI conversations, community posts
         and comments, and mentorship activity. This can&apos;t be undone.
       </p>

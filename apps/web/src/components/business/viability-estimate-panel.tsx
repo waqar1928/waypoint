@@ -42,7 +42,7 @@ export function ViabilityEstimatePanel({
     <Card>
       <h2 className="font-display text-lg font-semibold text-ink-900">Dream Viability Estimate</h2>
       <p className="mt-1 text-sm text-ink-500">
-        This is a decision-support estimate based on what you&rsquo;ve told us — not a guarantee of success.
+        This is a decision-support estimate based on what you&rsquo;ve told us. It&rsquo;s not a guarantee of success.
       </p>
 
       <Button onClick={handleGenerate} isLoading={isGenerating} className="mt-4">
@@ -60,8 +60,14 @@ export function ViabilityEstimatePanel({
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-beacon-600">Viability</p>
             <p className="mt-1 font-display text-3xl font-semibold text-ink-900">
-              {latest.viabilityEstimate ?? "—"}
-              <span className="text-base font-normal text-ink-500">/100</span>
+              {latest.viabilityEstimate != null ? (
+                <>
+                  {latest.viabilityEstimate}
+                  <span className="text-base font-normal text-ink-500">/100</span>
+                </>
+              ) : (
+                <span className="text-lg font-normal text-ink-500">Not yet estimated</span>
+              )}
             </p>
           </div>
 
@@ -80,7 +86,8 @@ export function ViabilityEstimatePanel({
           <ul className="mt-3 space-y-1.5 text-sm text-ink-500">
             {earlier.map((v) => (
               <li key={v.id}>
-                {new Date(v.createdAt).toLocaleDateString("en-US")} — {v.viabilityEstimate ?? "—"}/100
+                {new Date(v.createdAt).toLocaleDateString("en-US")}:{" "}
+                {v.viabilityEstimate != null ? `${v.viabilityEstimate}/100` : "not yet estimated"}
               </li>
             ))}
           </ul>

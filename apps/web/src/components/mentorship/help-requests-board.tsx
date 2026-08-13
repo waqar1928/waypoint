@@ -48,7 +48,7 @@ export function HelpRequestsBoard({ initialRequests }: { initialRequests: HelpRe
       )}
 
       {requests.length === 0 ? (
-        <p className="text-sm text-ink-500">No help requests yet — be the first to ask.</p>
+        <p className="text-sm text-ink-500">No help requests yet. Be the first to ask.</p>
       ) : (
         <ul className="space-y-3">
           {requests.map((r) => (

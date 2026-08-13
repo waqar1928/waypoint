@@ -6,7 +6,7 @@ namespace Waypoint.Community.Application;
 /// IProfileSummaryProvider the same way, with the same graceful fallback if a profile is missing.</summary>
 internal static class AuthorResolver
 {
-    private static AuthorDto Fallback(Guid userId) => new(userId, "Waypoint member", null);
+    private static AuthorDto Fallback(Guid userId) => new(userId, "Drevia member", null);
 
     public static async Task<AuthorDto> ResolveAsync(
         IProfileSummaryProvider provider, Guid userId, CancellationToken cancellationToken)

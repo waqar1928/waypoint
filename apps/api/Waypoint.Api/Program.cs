@@ -126,7 +126,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
-    options.Cookie.Name = "waypoint.csrf";
+    options.Cookie.Name = "drevia.csrf";
     options.Cookie.HttpOnly = false; // the frontend must be able to read this to echo it back as a header
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });

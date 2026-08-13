@@ -56,7 +56,7 @@ export default function RegisterPage() {
   return (
     <Card>
       <h1 className="font-display text-2xl font-semibold text-ink-900">Find your dream</h1>
-      <p className="mt-1 text-sm text-ink-700">Create your Waypoint account to get started.</p>
+      <p className="mt-1 text-sm text-ink-700">Create your Drevia account to get started.</p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>

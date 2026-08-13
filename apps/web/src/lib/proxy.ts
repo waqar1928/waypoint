@@ -28,8 +28,8 @@ export async function proxyToApi(
   } catch {
     return NextResponse.json(
       {
-        type: "https://waypoint.app/errors/upstream-unavailable",
-        title: "Waypoint's API is currently unreachable",
+        type: "https://drevia.net/errors/upstream-unavailable",
+        title: "Drevia's API is currently unreachable",
         status: 503,
         detail:
           "The backend service is not running or not reachable at " + API_BASE_URL,

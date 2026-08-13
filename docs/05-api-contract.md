@@ -22,7 +22,7 @@ error format defined here so the contract stays consistent as it grows.
 
 ```json
 {
-  "type": "https://waypoint.app/errors/validation-failed",
+  "type": "https://drevia.net/errors/validation-failed",
   "title": "Validation failed",
   "status": 400,
   "detail": "One or more fields are invalid.",

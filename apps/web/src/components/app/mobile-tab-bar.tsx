@@ -11,7 +11,7 @@ export function MobileTabBar() {
 
   return (
     <nav
-      aria-label="Waypoint"
+      aria-label="Drevia"
       className="fixed inset-x-0 bottom-0 z-10 flex overflow-x-auto border-t border-ink-300 bg-paper-raised md:hidden"
     >
       {items.map((item) => {

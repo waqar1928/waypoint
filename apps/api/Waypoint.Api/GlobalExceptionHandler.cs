@@ -21,7 +21,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         {
             ValidationException validationException => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/validation-failed",
+                Type = "https://drevia.net/errors/validation-failed",
                 Title = "Validation failed",
                 Status = StatusCodes.Status400BadRequest,
                 Detail = "One or more fields are invalid.",
@@ -29,49 +29,49 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             },
             NotFoundException notFound => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/not-found",
+                Type = "https://drevia.net/errors/not-found",
                 Title = "Not found",
                 Status = StatusCodes.Status404NotFound,
                 Detail = notFound.Message,
             },
             ConflictException conflict => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/conflict",
+                Type = "https://drevia.net/errors/conflict",
                 Title = "Conflict",
                 Status = StatusCodes.Status409Conflict,
                 Detail = conflict.Message,
             },
             AuthenticationFailedException authFailed => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/authentication-failed",
+                Type = "https://drevia.net/errors/authentication-failed",
                 Title = "Authentication failed",
                 Status = StatusCodes.Status401Unauthorized,
                 Detail = authFailed.Message,
             },
             AccountLockedException locked => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/account-locked",
+                Type = "https://drevia.net/errors/account-locked",
                 Title = "Account locked",
                 Status = StatusCodes.Status423Locked,
                 Detail = locked.Message,
             },
             EmailNotConfirmedException notConfirmed => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/email-not-confirmed",
+                Type = "https://drevia.net/errors/email-not-confirmed",
                 Title = "Email not confirmed",
                 Status = StatusCodes.Status403Forbidden,
                 Detail = notConfirmed.Message,
             },
             AntiforgeryValidationException => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/csrf-token-invalid",
+                Type = "https://drevia.net/errors/csrf-token-invalid",
                 Title = "Invalid or missing CSRF token",
                 Status = StatusCodes.Status403Forbidden,
             },
             AiServiceUnavailableException aiUnavailable => new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/ai-service-unavailable",
-                Title = "Waypoint Coach is unavailable",
+                Type = "https://drevia.net/errors/ai-service-unavailable",
+                Title = "Drevia Coach is unavailable",
                 Status = StatusCodes.Status503ServiceUnavailable,
                 Detail = aiUnavailable.Message,
             },
@@ -83,7 +83,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             logger.LogError(exception, "Unhandled exception processing {Path}", httpContext.Request.Path);
             problem = new ProblemDetails
             {
-                Type = "https://waypoint.app/errors/unexpected",
+                Type = "https://drevia.net/errors/unexpected",
                 Title = "An unexpected error occurred",
                 Status = StatusCodes.Status500InternalServerError,
             };

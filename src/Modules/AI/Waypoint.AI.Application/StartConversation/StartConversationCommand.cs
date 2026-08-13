@@ -104,7 +104,7 @@ public sealed class StartConversationCommandHandler(
         if (!string.IsNullOrWhiteSpace(dream.Purpose)) parts.Add($"Purpose: \"{dream.Purpose}\".");
         if (!string.IsNullOrWhiteSpace(dream.WhoItHelps)) parts.Add($"Who it helps: \"{dream.WhoItHelps}\".");
         if (!string.IsNullOrWhiteSpace(dream.Problem)) parts.Add($"Problem: \"{dream.Problem}\".");
-        parts.Add("Look at this with me — what stands out, what's strong, and what's worth pushing on?");
+        parts.Add("Look at this with me. What stands out, what's strong, and what's worth pushing on?");
         return string.Join(" ", parts);
     }
 
@@ -116,7 +116,7 @@ public sealed class StartConversationCommandHandler(
         if (!string.IsNullOrWhiteSpace(idea.ValueProposition)) parts.Add($"Value proposition: \"{idea.ValueProposition}\".");
         if (!string.IsNullOrWhiteSpace(idea.Pricing)) parts.Add($"Pricing: \"{idea.Pricing}\".");
         if (!string.IsNullOrWhiteSpace(idea.Competitors)) parts.Add($"Competitors: \"{idea.Competitors}\".");
-        parts.Add("Challenge this — where's it weakest, and what am I assuming that might not be true?");
+        parts.Add("Challenge this. Where's it weakest, and what am I assuming that might not be true?");
         return string.Join(" ", parts);
     }
 }

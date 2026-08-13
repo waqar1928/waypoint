@@ -35,7 +35,7 @@ export function BecomeMentorForm({
       </h2>
       <p className="mt-1 text-sm text-ink-700">
         Opt in to answer help requests from other people building their dream. No verification
-        required to start — that&rsquo;s a trust signal that builds over time, not a gate.
+        required to start. That&rsquo;s a trust signal that builds over time, not a gate.
       </p>
       {initialProfile ? (
         <p className="mt-2 text-xs text-ink-500">

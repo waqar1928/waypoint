@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
       <h1 className="font-display text-3xl font-semibold text-ink-900">
-        Welcome to Waypoint, {firstName}.
+        Welcome back, {firstName}.
       </h1>
       <p className="mt-2 text-ink-700">This is your Dream Dashboard.</p>
 
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
           <>
             <h2 className="mt-2 font-display text-xl font-semibold text-ink-900">Choose your next best action</h2>
             <p className="mt-1 text-sm text-ink-700">
-              You have a plan — add an action and mark it as next so you always know what to do today.
+              You have a plan. Add an action and mark it as next so you always know what to do today.
             </p>
             <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
               Go to Actions
@@ -173,7 +173,9 @@ export default async function DashboardPage() {
             <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Business Builder</h3>
             <p className="mt-1 text-sm text-ink-700">
               {latestViability
-                ? `Latest viability estimate: ${latestViability.viabilityEstimate ?? "—"}/100`
+                ? latestViability.viabilityEstimate != null
+                  ? `Latest viability estimate: ${latestViability.viabilityEstimate}/100`
+                  : "Latest validation is in, no viability estimate yet."
                 : "Fill in your business profile to get a viability estimate."}
             </p>
             <Link href="/app/business" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
@@ -184,11 +186,11 @@ export default async function DashboardPage() {
 
         <Card>
           <MessageCircleQuestion className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-          <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Waypoint Coach</h3>
+          <h3 className="mt-3 font-display text-base font-semibold text-ink-900">Drevia Coach</h3>
           <p className="mt-1 text-sm text-ink-700">
             {conversations.length > 0
               ? `${conversations.length} ${conversations.length === 1 ? "conversation" : "conversations"} so far.`
-              : "A collaborative guide, not a verdict — talk through your dream anytime."}
+              : "A collaborative guide, not a verdict. Talk through your dream anytime."}
           </p>
           <Link href="/app/coach" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
             Talk to Coach
@@ -201,7 +203,7 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-ink-700">
             {myPosts.length > 0
               ? `${myPosts.length} ${myPosts.length === 1 ? "post" : "posts"} shared so far.`
-              : "An opt-in space to share progress with other Waypoint members."}
+              : "An opt-in space to share progress with other members."}
           </p>
           <Link href="/app/community" className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
             Go to Community
@@ -223,8 +225,8 @@ export default async function DashboardPage() {
       </div>
 
       <Card className="mt-6">
-        <h2 className="font-display text-lg font-semibold text-ink-900">The Waypoint Arc</h2>
-        <p className="mt-1 text-sm text-ink-700">Where you are in the journey right now.</p>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Your progress</h2>
+        <p className="mt-1 text-sm text-ink-700">Where you are right now.</p>
         <ol className="mt-5 flex flex-wrap gap-2 text-sm">
           {arcStages.map((stage) => (
             <li

@@ -41,8 +41,8 @@ export default async function BusinessPage() {
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink-900">Business Builder</h1>
           <p className="mt-2 text-ink-700">
-            Build out and stress-test the business version of &ldquo;{dream.title}&rdquo;. Fill in what you know —
-            everything here is optional and editable any time.
+            Build out and stress-test the business version of &ldquo;{dream.title}&rdquo;. Fill in what you know.
+            Everything here is optional and editable any time.
           </p>
         </div>
         {idea ? (
