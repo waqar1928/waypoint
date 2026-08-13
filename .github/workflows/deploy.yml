@@ -1,0 +1,61 @@
+name: Deploy to Hostinger VPS
+
+# Manual trigger only (workflow_dispatch) — this workflow never runs on push or pull_request.
+# A production deployment happens only when a human explicitly clicks "Run workflow" in the
+# GitHub Actions tab, per this project's own rule that no deployment runs without explicit
+# approval. Recommended follow-up (configured in GitHub's UI, not here): add a required-reviewer
+# rule on the "production" environment below so a second person must approve each run before it
+# executes, if more than one person has push access to this repo.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm you intend to deploy to production'
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Verify confirmation input
+        if: github.event.inputs.confirm != 'deploy'
+        run: |
+          echo "::error::Confirmation input did not match 'deploy'. Aborting."
+          exit 1
+
+      # This workflow deliberately does not check out the repo, build anything, or handle any
+      # application secret (DB password, ANTHROPIC_API_KEY, SMTP credentials). Those live only in
+      # /opt/drevia/.env on the VPS itself (see docs/HOSTINGER_DEPLOYMENT.md) and are never read,
+      # transmitted, or logged by this workflow. The only thing this job needs from GitHub
+      # Secrets is SSH access to run the same two commands documented in
+      # docs/HOSTINGER_DEPLOYMENT.md's "Update/redeploy procedure" step.
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          script: |
+            set -euo pipefail
+            cd /opt/drevia
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml ps
+
+# Required repository configuration before this workflow can run (see
+# docs/HOSTINGER_DEPLOYMENT.md for how to obtain each value):
+#
+#   Settings -> Environments -> New environment named "production"
+#     (optionally add required reviewers here for a second-approval gate)
+#
+#   Settings -> Environments -> production -> Environment secrets:
+#     HOSTINGER_SSH_HOST          the VPS's public IP or hostname
+#     HOSTINGER_SSH_USER          the deploy user created in docs/HOSTINGER_DEPLOYMENT.md Step 4
+#     HOSTINGER_SSH_PRIVATE_KEY   a private key whose matching public key is authorized on the
+#                                 VPS for that user (a dedicated CI-only key, not your personal one)
+#     HOSTINGER_SSH_PORT          usually 22, unless sshd was reconfigured to a non-default port

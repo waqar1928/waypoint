@@ -13,17 +13,28 @@ out/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.prod
+# .env.example and .env.production.example are intentionally NOT ignored — they contain
+# placeholders only and are meant to be committed as templates.
 
 # Secrets / credentials — defense-in-depth beyond .env (see
 # docs/PRODUCTION_READINESS_AUDIT.md security section). Nothing here has ever been committed
 # (verified via repo-wide grep as part of that audit) but the net was thinner than it should be.
 secrets.json
 appsettings.*.local.json
+appsettings.Production.json
 *.pem
 *.key
 *.pfx
 credentials.json
 credentials.*.json
+
+# ASP.NET Core Data Protection keys — must never be committed if the app is ever run locally with
+# Waypoint:DataProtection:KeysDirectory pointed inside the repo. Production keeps these in a
+# Docker volume outside the repo entirely (see docker-compose.prod.yml), this is just a backstop.
+keys/
+*.dataprotection.xml
 
 # OS
 .DS_Store

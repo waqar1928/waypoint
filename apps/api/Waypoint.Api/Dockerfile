@@ -28,7 +28,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 # port and doesn't need to write anywhere outside /app.
 RUN groupadd --system waypoint && useradd --system --gid waypoint waypoint
 COPY --from=build /app .
-RUN chown -R waypoint:waypoint /app
+
+# Pre-create the Data Protection key directory and own it as the app user before the volume is
+# ever mounted here. A named Docker volume that's empty on first use copies whatever the image
+# already has at that path (content and ownership) into the volume — so this is what makes
+# /keys writable by a non-root container once docker-compose.prod.yml mounts a persistent volume
+# at this same path. See Program.cs's Waypoint:DataProtection:KeysDirectory wiring.
+RUN mkdir -p /keys && chown -R waypoint:waypoint /app /keys
 USER waypoint
 
 ENV ASPNETCORE_URLS=http://+:8080

@@ -1,0 +1,113 @@
+# Production compose file for a Hostinger VPS. See docs/HOSTINGER_DEPLOYMENT.md for the full
+# setup walkthrough and docs/ENVIRONMENT_VARIABLES.md for what every variable below does.
+#
+# Usage on the VPS:
+#   cp .env.production.example .env   # then fill in real values, never commit this file
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# This is a separate file from docker-compose.yml (local dev) on purpose: dev needs published
+# ports on postgres/api for local tooling and doesn't need a reverse proxy or HTTPS, production
+# needs the opposite. Sharing one file would mean compromising one environment for the other.
+#
+# Network topology (see deploy/caddy/Caddyfile for the proxy side):
+#   Internet -> caddy (edge, ports 80/443 published) -> web (edge+backend) -> api (backend+data) -> postgres (data only)
+# `data` is a Docker `internal: true` network: postgres has no route out to the internet at all,
+# not just no published port. `api` also sits on `backend` so it keeps outbound internet access
+# (needed for the Anthropic API and outbound SMTP) even though its database traffic never leaves
+# the internal network.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - drevia_postgres_data:/var/lib/postgresql/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No `ports:` entry anywhere in this file for postgres — it must only ever be reachable from
+    # the api container over the internal `data` network, never from the host or the internet.
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Waypoint.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${POSTGRES_DB:?Set POSTGRES_DB in .env};Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      Waypoint__WebAppBaseUrl: ${WEB_APP_BASE_URL:?Set WEB_APP_BASE_URL in .env, e.g. https://app.drevia.net}
+      Waypoint__AutoMigrate: "true"
+      Waypoint__DataProtection__KeysDirectory: /keys
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      Email__Smtp__Host: ${SMTP_HOST:-}
+      Email__Smtp__Port: ${SMTP_PORT:-587}
+      Email__Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-true}
+      Email__Smtp__Username: ${SMTP_USERNAME:-}
+      Email__Smtp__Password: ${SMTP_PASSWORD:-}
+      Email__Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-no-reply@drevia.net}
+      Email__Smtp__FromName: ${SMTP_FROM_NAME:-Drevia}
+    volumes:
+      - drevia_dataprotection_keys:/keys
+    networks:
+      - backend
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # No `ports:` entry — only `web` (over the internal `backend` network) ever talks to this
+    # service. The browser never connects to the API directly; see apps/web/src/lib/proxy.ts.
+
+  web:
+    build:
+      context: apps/web
+      dockerfile: Dockerfile
+      args:
+        # Baked into the client bundle at build time (see Dockerfile's comment on this ARG) —
+        # must be the real public URL, not the internal `api` hostname.
+        NEXT_PUBLIC_SITE_URL: ${WEB_APP_BASE_URL:?Set WEB_APP_BASE_URL in .env, e.g. https://app.drevia.net}
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8080
+    networks:
+      - edge
+      - backend
+    depends_on:
+      api:
+        condition: service_started
+    # No `ports:` entry — only reachable through the `caddy` reverse proxy on the `edge` network.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - drevia_caddy_data:/data
+      - drevia_caddy_config:/config
+    networks:
+      - edge
+    depends_on:
+      - web
+
+networks:
+  edge:
+  backend:
+  data:
+    internal: true
+
+volumes:
+  drevia_postgres_data:
+  drevia_dataprotection_keys:
+  drevia_caddy_data:
+  drevia_caddy_config:

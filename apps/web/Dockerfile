@@ -3,6 +3,15 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+
+# NEXT_PUBLIC_* variables are inlined into the client JS bundle at build time, not read at
+# runtime — unlike API_BASE_URL below, setting this in docker-compose.yml's `environment:` would
+# have no effect on an already-built image. Must be passed as a build arg (docker-compose.yml's
+# `build.args`) so metadataBase/robots.ts/sitemap.ts resolve to the real production URL instead of
+# the http://localhost:3030 dev fallback baked in otherwise.
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 RUN npm run build
 
 FROM node:22-alpine AS runtime

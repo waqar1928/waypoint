@@ -1,0 +1,29 @@
+# Production reverse proxy for Drevia. Caddy gets automatic HTTPS (Let's Encrypt, auto-renewal)
+# for free just from listing real hostnames here — no manual certbot setup, no cron job to renew.
+#
+# Both domains point at the same `web` container: this is one Next.js app serving marketing pages
+# (/, /login, /privacy, etc.) and the authenticated app (/app/*) from a single deployable, not two
+# separate apps. See docs/HOSTINGER_DEPLOYMENT.md for the DNS records these hostnames require.
+
+drevia.net, www.drevia.net, app.drevia.net {
+	# Standard hardening headers duplicated at the edge. apps/web/next.config.ts already sets
+	# these on every response in production, so this is redundant-by-design defense in depth,
+	# not a substitute — if the app-level headers ever regress, the proxy still enforces this
+	# minimum. HSTS specifically belongs here rather than only in the app, since it must apply
+	# even to the initial HTTP request Caddy redirects before it ever reaches `web`.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	reverse_proxy web:3000
+
+	encode gzip
+
+	log {
+		output stdout
+		format json
+	}
+}

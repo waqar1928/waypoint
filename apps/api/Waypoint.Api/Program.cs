@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
@@ -75,6 +76,30 @@ builder.Services.AddMentorshipModule(builder.Configuration);
 builder.Services.AddNotificationsModule(builder.Configuration);
 
 // ---- Cross-cutting ----------------------------------------------------
+// Auth cookies and antiforgery tokens are both protected with ASP.NET Core's Data Protection
+// system. Left on its default settings, the key ring lives in the container's own filesystem and
+// is regenerated from scratch every time the container restarts or is redeployed — which silently
+// invalidates every logged-in user's session and every in-flight CSRF token on every deploy. Set
+// Waypoint:DataProtection:KeysDirectory (env: Waypoint__DataProtection__KeysDirectory) to a path
+// backed by a persistent Docker volume (see docker-compose.prod.yml's drevia_dataprotection_keys
+// volume, mounted at /keys) so keys survive restarts/redeploys; unset, this falls back to a
+// directory under the app's own working folder, which is fine for local dev but must not be used
+// in production without a volume mounted at that same path.
+var dataProtectionKeysDirectory = builder.Configuration["Waypoint:DataProtection:KeysDirectory"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysDirectory))
+{
+    Directory.CreateDirectory(dataProtectionKeysDirectory);
+    builder.Services.AddDataProtection()
+        .SetApplicationName("Drevia")
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysDirectory));
+}
+else if (!builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "Waypoint:DataProtection:KeysDirectory must be set outside Development so auth/antiforgery keys survive container restarts. " +
+        "Point it at a path backed by a persistent volume.");
+}
+
 // In-process only (not distributed) — sole current consumer is AnthropicAiService's prompt
 // template lookup, a single-instance dev/staging deployment. Revisit with a distributed cache
 // (Redis) if this ever runs multi-instance and needs cache coherency across processes.
