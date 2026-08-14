@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError, useFieldIds } from "@/components/ui/field";
 import { registerSchema, type RegisterInput } from "@/lib/validation";
-import { isProblemDetails } from "@/lib/api-types";
 import { apiMutate } from "@/lib/api-client";
+import { submitRegistration } from "@/lib/register-flow";
 
 export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
@@ -27,34 +27,39 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: RegisterInput) => {
     setFormError(null);
-    const response = await apiMutate("/api/auth/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(values),
-    });
 
-    if (response.ok) {
-      // Registration creates the account and sends a confirmation email, but does not sign the
-      // user in (RequireConfirmedAccount = true means login is blocked until they click the
-      // email link, see DependencyInjection.cs) — redirecting straight to /app/dashboard here
-      // would just bounce them to /login with no explanation, since there's no session yet. Show
-      // a "check your email" state instead, matching forgot-password/page.tsx's pattern.
-      setRegistered(true);
-      return;
-    }
-
-    const payload = await response.json().catch(() => null);
-    if (isProblemDetails(payload) && payload.errors) {
-      for (const [field, messages] of Object.entries(payload.errors)) {
-        setError(field as keyof RegisterInput, { message: messages[0] });
-      }
-      return;
-    }
-    setFormError(
-      isProblemDetails(payload) && payload.detail
-        ? payload.detail
-        : "We couldn't create your account. Please try again.",
+    // submitRegistration never throws (see its doc comment) — every outcome, including a
+    // network failure, comes back as a plain return value, so this await always settles and
+    // react-hook-form's isSubmitting always resets. The button can't get stuck on "..." no
+    // matter what the API returns.
+    const outcome = await submitRegistration(
+      (body) =>
+        apiMutate("/api/auth/register", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+      values,
     );
+
+    switch (outcome.kind) {
+      case "success":
+        // Registration creates the account and sends a confirmation email, but does not sign
+        // the user in (RequireConfirmedAccount = true means login is blocked until they click
+        // the email link, see DependencyInjection.cs) — redirecting straight to /app/dashboard
+        // here would just bounce them to /login with no explanation, since there's no session
+        // yet. Show a "check your email" state instead, matching forgot-password/page.tsx.
+        setRegistered(true);
+        return;
+      case "fieldErrors":
+        for (const [field, message] of Object.entries(outcome.errors)) {
+          setError(field as keyof RegisterInput, { message });
+        }
+        return;
+      case "error":
+        setFormError(outcome.message);
+        return;
+    }
   };
 
   if (registered) {
