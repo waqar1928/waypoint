@@ -79,7 +79,13 @@ export default function RegisterPage() {
       <h1 className="font-display text-2xl font-semibold text-ink-900">Find your dream</h1>
       <p className="mt-1 text-sm text-ink-700">Create your Drevia account to get started.</p>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* method="post" is a defense-in-depth backstop, not the primary submission path (onSubmit
+          calls handleSubmit and fetches the API directly) — if React hydration ever fails for any
+          reason, a browser's native fallback form submission defaults to method="get", which would
+          put the password field in the URL/browser history/server logs. Explicit post keeps that
+          fallback safe even though it wouldn't actually reach the API (there's no server action or
+          action= URL to submit to; it would just reload this page with fields cleared). */}
+      <form className="mt-6 space-y-5" method="post" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <Label htmlFor={name.inputId}>Name</Label>
           <Input

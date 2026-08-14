@@ -83,7 +83,10 @@ function ResetPasswordForm() {
     <Card>
       <h1 className="font-display text-2xl font-semibold text-ink-900">Choose a new password</h1>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* method="post" is a defense-in-depth backstop against a native fallback submission (if
+          hydration ever failed) defaulting to method="get" and putting the password in the URL —
+          see the identical comment on register/page.tsx for the full explanation. */}
+      <form className="mt-6 space-y-5" method="post" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <Label htmlFor={newPassword.inputId}>New password</Label>
           <Input

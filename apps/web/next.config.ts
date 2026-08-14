@@ -1,32 +1,16 @@
 import type { NextConfig } from "next";
 
-// Kept CSP production-only: Next.js dev mode (Turbopack Fast Refresh/HMR) needs
-// 'unsafe-eval'/'unsafe-inline' for its own tooling, so a strict CSP in dev would either be
-// pointless (loosened to the point of not protecting anything) or would break the live-preview
-// workflow this project's whole dev loop depends on. The other headers are safe unconditionally.
+// Content-Security-Policy is NOT set here anymore — it moved to middleware.ts, the only place a
+// per-request nonce can be generated and threaded into the header value. A static CSP here (the
+// previous approach) can't include a nonce, and a `script-src 'self'` with no nonce/hash/
+// 'unsafe-inline' blocks Next.js's own required inline hydration scripts — see middleware.ts's
+// doc comment for what that actually broke in production (registration's password ending up in
+// the URL, among other things). The headers below don't need a nonce and stay static/unconditional.
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-  ...(process.env.NODE_ENV === "production"
-    ? [
-        {
-          key: "Content-Security-Policy",
-          value: [
-            "default-src 'self'",
-            "script-src 'self'",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: https:",
-            "font-src 'self' data:",
-            "connect-src 'self'",
-            "frame-ancestors 'none'",
-            "object-src 'none'",
-            "base-uri 'self'",
-          ].join("; "),
-        },
-      ]
-    : []),
 ];
 
 const nextConfig: NextConfig = {

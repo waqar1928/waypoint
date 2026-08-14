@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -33,7 +34,16 @@ export const metadata: Metadata = {
   twitter: { card: "summary", title, description },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Reading headers() here is required, not decorative: it's what makes Next.js aware of the
+  // per-request nonce middleware.ts generates and opts every page into dynamic rendering, which
+  // is what lets Next.js apply that same nonce to its own inline hydration scripts so they match
+  // the nonce in the CSP header. Without this, pages stay statically prerendered (built once,
+  // with no per-request nonce at all) and the CSP blocks Next's own scripts again — see
+  // middleware.ts's doc comment for what that broke in production. The nonce value itself isn't
+  // used anywhere below since this app has no custom inline <script> tags of its own.
+  await headers();
+
   return (
     <html
       lang="en"

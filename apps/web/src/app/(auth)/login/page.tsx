@@ -77,7 +77,10 @@ export default function LoginPage() {
       <h1 className="font-display text-2xl font-semibold text-ink-900">Welcome back</h1>
       <p className="mt-1 text-sm text-ink-700">Log in to pick up where you left off.</p>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* method="post" is a defense-in-depth backstop against a native fallback submission (if
+          hydration ever failed) defaulting to method="get" and putting the password in the URL —
+          see the identical comment on register/page.tsx for the full explanation. */}
+      <form className="mt-6 space-y-5" method="post" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <Label htmlFor={email.inputId}>Email</Label>
           <Input
