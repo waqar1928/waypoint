@@ -33,7 +33,10 @@ EXPOSE 3000
 # package install just for a healthcheck. Hits the root route rather than a
 # dedicated /health path since this is a Next.js app, not the API — there's
 # no existing health endpoint here to reuse.
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
 CMD ["node", "server.js"]
