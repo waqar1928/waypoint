@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "@/components/ui/card";
@@ -13,8 +12,8 @@ import { isProblemDetails } from "@/lib/api-types";
 import { apiMutate } from "@/lib/api-client";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
   const {
     register,
     handleSubmit,
@@ -35,7 +34,12 @@ export default function RegisterPage() {
     });
 
     if (response.ok) {
-      router.push("/app/dashboard");
+      // Registration creates the account and sends a confirmation email, but does not sign the
+      // user in (RequireConfirmedAccount = true means login is blocked until they click the
+      // email link, see DependencyInjection.cs) — redirecting straight to /app/dashboard here
+      // would just bounce them to /login with no explanation, since there's no session yet. Show
+      // a "check your email" state instead, matching forgot-password/page.tsx's pattern.
+      setRegistered(true);
       return;
     }
 
@@ -52,6 +56,23 @@ export default function RegisterPage() {
         : "We couldn't create your account. Please try again.",
     );
   };
+
+  if (registered) {
+    return (
+      <Card>
+        <h1 className="font-display text-2xl font-semibold text-ink-900">Check your email</h1>
+        <p className="mt-3 text-sm text-ink-700">
+          We&apos;ve sent a confirmation link to your email address. Click it to activate your
+          account, then log in.
+        </p>
+        <p className="mt-6 text-center text-sm text-ink-700">
+          <Link href="/login" className="font-medium text-beacon-600 hover:underline">
+            Back to log in
+          </Link>
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card>
