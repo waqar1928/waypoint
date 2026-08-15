@@ -13,6 +13,7 @@ import {
   Settings,
   Users,
   HeartHandshake,
+  Trophy,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,6 +31,10 @@ export const navItems: NavItem[] = [
   { label: "Actions", href: "/app/actions", icon: ListChecks, available: true },
   { label: "Experiment Lab", href: "/app/experiments", icon: FlaskConical, available: true },
   { label: "Business Builder", href: "/app/business", icon: Building2, available: true },
+  // Milestones has no dedicated page - it's the MilestonesPanel rendered directly on the
+  // Dashboard (see dashboard/page.tsx), same situation Journal was in before it got a nav entry.
+  // Routes to the Dashboard's #milestones anchor instead of a standalone page.
+  { label: "Milestones", href: "/app/dashboard#milestones", icon: Trophy, available: true },
   { label: "Drevia Coach", href: "/app/coach", icon: MessageCircleQuestion, available: true },
   { label: "Community", href: "/app/community", icon: Users, available: true },
   { label: "Mentorship", href: "/app/mentorship", icon: HeartHandshake, available: true },

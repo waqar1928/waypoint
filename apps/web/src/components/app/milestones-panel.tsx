@@ -45,7 +45,10 @@ export function MilestonesPanel({ initialMilestones }: { initialMilestones: Mile
   };
 
   return (
-    <Card>
+    // id="milestones" is the target of the sidebar's Milestones nav link (nav-items.ts points at
+    // /app/dashboard#milestones). Same situation Journal was in: a real, working panel with no
+    // nav entry at all until now.
+    <Card id="milestones">
       <Trophy className="h-5 w-5 text-ink-500" aria-hidden="true" />
       <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Milestones</h2>
       <p className="mt-1 text-sm text-ink-500">Mark the moments worth remembering.</p>
