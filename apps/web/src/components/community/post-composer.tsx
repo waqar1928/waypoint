@@ -14,7 +14,7 @@ export function PostComposer({ onCreate }: { onCreate: (values: CreatePostInput)
     formState: { errors, isSubmitting },
   } = useForm<CreatePostInput>({
     resolver: zodResolver(createPostSchema),
-    defaultValues: { visibility: "community" },
+    defaultValues: { visibility: "community", attachDream: false },
   });
 
   return (
@@ -22,7 +22,9 @@ export function PostComposer({ onCreate }: { onCreate: (values: CreatePostInput)
       className="space-y-3 rounded-2xl border border-ink-300 bg-paper-raised p-5"
       onSubmit={handleSubmit(async (values) => {
         await onCreate(values);
-        reset({ body: "", visibility: values.visibility });
+        // attachDream resets to false (not preserved like visibility) - deliberately not sticky,
+        // so it can't silently stay checked and attach your Dream to a post you didn't mean to.
+        reset({ body: "", visibility: values.visibility, attachDream: false });
       })}
       noValidate
     >
@@ -38,6 +40,14 @@ export function PostComposer({ onCreate }: { onCreate: (values: CreatePostInput)
         />
         <FieldError id="post-body-error">{errors.body?.message}</FieldError>
       </div>
+
+      {/* Opt-in, off by default, decided fresh per post - see createPostSchema.attachDream. The
+          server resolves your own current Dream; there's no way for this checkbox to attach
+          anyone else's. Shown to whoever the post's visibility allows, not just you. */}
+      <label className="flex items-start gap-2 text-xs text-ink-500">
+        <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 rounded border-ink-300" {...register("attachDream")} />
+        <span>Attach my Dream so people can see what this is about</span>
+      </label>
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">

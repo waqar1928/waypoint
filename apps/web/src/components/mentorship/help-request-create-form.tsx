@@ -23,7 +23,7 @@ export function HelpRequestCreateForm({
     formState: { errors, isSubmitting },
   } = useForm<CreateHelpRequestInput>({
     resolver: zodResolver(createHelpRequestSchema),
-    defaultValues: { category: "business" },
+    defaultValues: { category: "business", attachDream: false },
   });
 
   return (
@@ -71,6 +71,15 @@ export function HelpRequestCreateForm({
         />
         <FieldError id="help-body-error">{errors.body?.message}</FieldError>
       </div>
+
+      <label className="flex items-start gap-2 text-xs text-ink-500">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-3.5 w-3.5 rounded border-ink-300"
+          {...register("attachDream")}
+        />
+        <span>Attach my Dream so mentors can see what this is about</span>
+      </label>
 
       <div className="flex gap-3">
         <Button type="submit" isLoading={isSubmitting}>

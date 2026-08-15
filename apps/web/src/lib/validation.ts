@@ -118,6 +118,10 @@ export type BusinessIdeaInput = z.infer<typeof businessIdeaSchema>;
 export const createPostSchema = z.object({
   body: z.string().min(1, "Say something").max(2000, "Keep this under 2000 characters"),
   visibility: z.enum(["private", "community", "public"]),
+  // Opt-in, off by default - see post-composer.tsx and CreatePostCommand's doc comment on why
+  // this is a plain boolean rather than a Dream id (the server resolves the signed-in user's own
+  // Dream itself; the client never gets to say which Dream to attach).
+  attachDream: z.boolean(),
 });
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 
@@ -145,6 +149,8 @@ export const createHelpRequestSchema = z.object({
   ]),
   title: z.string().min(1, "Give this a title").max(200, "Keep the title under 200 characters"),
   body: z.string().min(1, "Describe what you need help with").max(2000, "Keep this under 2000 characters"),
+  // Same opt-in pattern as createPostSchema.attachDream - see that field's comment.
+  attachDream: z.boolean(),
 });
 export type CreateHelpRequestInput = z.infer<typeof createHelpRequestSchema>;
 

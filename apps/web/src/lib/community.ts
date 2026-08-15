@@ -9,11 +9,19 @@ export interface Author {
   avatarUrl: string | null;
 }
 
+/** Lean by design - title/statement only, matching the backend's AttachedDreamDto. Present only
+ * when the author opted in to attaching their Dream (see post-composer.tsx). */
+export interface AttachedDream {
+  title: string;
+  statement: string;
+}
+
 export interface Post {
   id: string;
   author: Author;
   body: string;
   visibility: PostVisibility;
+  attachedDream: AttachedDream | null;
   commentCount: number;
   isMine: boolean;
   createdAt: string;

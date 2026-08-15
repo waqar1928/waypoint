@@ -16,10 +16,22 @@ public sealed record MentorProfileDto(
         profile.Id, mentor, profile.Expertise, profile.YearsExperience, profile.Availability, profile.VerificationStatus);
 }
 
+/// <summary>
+/// Deliberately lean - title and statement only. Same reasoning as Community's identical
+/// AttachedDreamDto: attaching a Dream to a help request is opt-in (see CreateHelpRequestCommand's
+/// AttachDream flag), but a mentor reading this doesn't need the same depth of detail Drevia
+/// Coach gets - this is what's shown to another person, not what's stored privately. Kept as its
+/// own type per-module (matching how PersonDto/AuthorDto are each module-local too) rather than a
+/// new shared type in Waypoint.Common, since the only actual cross-module contract needed here is
+/// IDreamSummaryProvider itself.
+/// </summary>
+public sealed record AttachedDreamDto(string Title, string Statement);
+
 public sealed record HelpRequestDto(
     Guid Id,
     PersonDto Author,
     Guid? DreamId,
+    AttachedDreamDto? AttachedDream,
     HelpRequestCategory Category,
     string Title,
     string Body,
@@ -28,8 +40,9 @@ public sealed record HelpRequestDto(
     bool IsMine,
     DateTimeOffset CreatedAt)
 {
-    public static HelpRequestDto From(HelpRequest request, PersonDto author, int responseCount, Guid currentUserId) => new(
-        request.Id, author, request.DreamId, request.Category, request.Title, request.Body,
+    public static HelpRequestDto From(
+        HelpRequest request, PersonDto author, AttachedDreamDto? attachedDream, int responseCount, Guid currentUserId) => new(
+        request.Id, author, request.DreamId, attachedDream, request.Category, request.Title, request.Body,
         request.Status, responseCount, request.UserId == currentUserId, request.CreatedAt);
 }
 

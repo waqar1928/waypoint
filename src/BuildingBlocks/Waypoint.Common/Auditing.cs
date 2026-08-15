@@ -59,6 +59,20 @@ public sealed record DreamSummary(
 public interface IDreamSummaryProvider
 {
     Task<DreamSummary?> GetForUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Resolves a Dream by its own Id rather than by owner - added for Community/Mentorship's
+    /// optional "attach my Dream" feature, where a post/help-request author's OWN Dream is
+    /// resolved and stored server-side at creation time (see CreatePostCommand/
+    /// CreateHelpRequestCommand — deliberately a bool AttachDream flag, never a client-supplied
+    /// DreamId, so there's no way to attach a Dream that isn't yours), then read back here by
+    /// other users viewing the feed. Never trust a caller-supplied dreamId for anything
+    /// authorization-sensitive; this method only resolves already-validated, already-stored Ids.
+    /// </summary>
+    Task<DreamSummary?> GetByIdAsync(Guid dreamId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<Guid, DreamSummary>> GetByIdsAsync(
+        IReadOnlyList<Guid> dreamIds, CancellationToken cancellationToken);
 }
 
 /// <summary>

@@ -32,7 +32,9 @@ public static class CommunityEndpoints
             Results.Ok(await sender.Send(new GetMyPostsQuery(), ct)));
 
         group.MapPost("/posts", async (CreatePostRequest body, ISender sender, CancellationToken ct) =>
-            Results.Created("/api/v1/community/feed", await sender.Send(new CreatePostCommand(body.Body, body.Visibility, body.DreamId), ct)));
+            Results.Created(
+                "/api/v1/community/feed",
+                await sender.Send(new CreatePostCommand(body.Body, body.Visibility, body.AttachDream), ct)));
 
         group.MapDelete("/posts/{postId:guid}", async (Guid postId, ISender sender, CancellationToken ct) =>
         {
@@ -91,6 +93,6 @@ public static class CommunityEndpoints
     }
 }
 
-public sealed record CreatePostRequest(string Body, PostVisibility Visibility, Guid? DreamId);
+public sealed record CreatePostRequest(string Body, PostVisibility Visibility, bool AttachDream = false);
 public sealed record CreateCommentRequest(string Body);
 public sealed record ReportContentRequest(string EntityType, Guid EntityId, string Reason, string? Details);

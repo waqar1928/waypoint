@@ -7,7 +7,10 @@ namespace Waypoint.Mentorship.Application.CloseHelpRequest;
 public sealed record CloseHelpRequestCommand(Guid HelpRequestId) : IRequest<HelpRequestDto>;
 
 public sealed class CloseHelpRequestCommandHandler(
-    IMentorshipRepository repository, IProfileSummaryProvider profileSummaryProvider, ICurrentUserAccessor currentUser)
+    IMentorshipRepository repository,
+    IProfileSummaryProvider profileSummaryProvider,
+    IDreamSummaryProvider dreamSummaryProvider,
+    ICurrentUserAccessor currentUser)
     : IRequestHandler<CloseHelpRequestCommand, HelpRequestDto>
 {
     public async Task<HelpRequestDto> Handle(CloseHelpRequestCommand request, CancellationToken cancellationToken)
@@ -27,6 +30,7 @@ public sealed class CloseHelpRequestCommandHandler(
 
         var counts = await repository.GetResponseCountsAsync([helpRequest.Id], cancellationToken);
         var author = await PersonResolver.ResolveAsync(profileSummaryProvider, userId, cancellationToken);
-        return HelpRequestDto.From(helpRequest, author, counts.GetValueOrDefault(helpRequest.Id), userId);
+        var attachedDream = await AttachedDreamResolver.ResolveAsync(dreamSummaryProvider, helpRequest.DreamId, cancellationToken);
+        return HelpRequestDto.From(helpRequest, author, attachedDream, counts.GetValueOrDefault(helpRequest.Id), userId);
     }
 }

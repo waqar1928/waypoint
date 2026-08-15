@@ -12,10 +12,12 @@ public class CloseHelpRequestCommandHandlerTests
 {
     private readonly IMentorshipRepository _repository = Substitute.For<IMentorshipRepository>();
     private readonly IProfileSummaryProvider _profileSummaryProvider = Substitute.For<IProfileSummaryProvider>();
+    private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly Guid _userId = Guid.NewGuid();
 
-    private CloseHelpRequestCommandHandler CreateHandler() => new(_repository, _profileSummaryProvider, _currentUser);
+    private CloseHelpRequestCommandHandler CreateHandler() =>
+        new(_repository, _profileSummaryProvider, _dreamSummaryProvider, _currentUser);
 
     [Fact]
     public async Task Throws_when_closing_someone_elses_help_request()

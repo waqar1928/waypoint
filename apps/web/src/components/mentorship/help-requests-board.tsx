@@ -18,7 +18,7 @@ export function HelpRequestsBoard({ initialRequests }: { initialRequests: HelpRe
     const response = await apiMutate("/api/mentorship/help-requests", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...values, dreamId: null }),
+      body: JSON.stringify(values),
     });
     if (!response.ok) {
       setError("We couldn't post that. Please try again.");

@@ -21,10 +21,18 @@ export interface MentorProfile {
   verificationStatus: VerificationStatus;
 }
 
+/** Lean by design - title/statement only, matching the backend's AttachedDreamDto. Present only
+ * when the author opted in to attaching their Dream (see help-requests-board.tsx). */
+export interface AttachedDream {
+  title: string;
+  statement: string;
+}
+
 export interface HelpRequest {
   id: string;
   author: Person;
   dreamId: string | null;
+  attachedDream: AttachedDream | null;
   category: HelpRequestCategory;
   title: string;
   body: string;

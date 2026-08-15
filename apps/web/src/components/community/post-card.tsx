@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
-import { Lock, Users } from "lucide-react";
+import { Compass, Lock, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReportButton } from "@/components/shared/report-button";
@@ -83,6 +83,16 @@ export function PostCard({ post, onDelete }: { post: Post; onDelete: (postId: st
       </div>
 
       <p className="mt-3 whitespace-pre-wrap text-sm text-ink-900">{post.body}</p>
+
+      {post.attachedDream ? (
+        <div className="mt-3 flex items-start gap-2 rounded-[10px] bg-ink-100 px-3 py-2.5">
+          <Compass className="mt-0.5 h-3.5 w-3.5 shrink-0 text-beacon-500" aria-hidden="true" />
+          <div>
+            <p className="text-xs font-medium text-ink-700">{post.attachedDream.title}</p>
+            <p className="mt-0.5 text-xs text-ink-500">{post.attachedDream.statement}</p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-3 flex items-center gap-4 border-t border-ink-300 pt-3">
         <button type="button" onClick={loadComments} className="text-xs font-medium text-beacon-600 hover:underline">

@@ -43,7 +43,7 @@ public static class MentorshipEndpoints
 
         group.MapPost("/help-requests", async (CreateHelpRequestRequest body, ISender sender, CancellationToken ct) =>
             Results.Created("/api/v1/mentorship/help-requests", await sender.Send(
-                new CreateHelpRequestCommand(body.Category, body.Title, body.Body, body.DreamId), ct)));
+                new CreateHelpRequestCommand(body.Category, body.Title, body.Body, body.AttachDream), ct)));
 
         group.MapGet("/help-requests/{helpRequestId:guid}/responses", async (Guid helpRequestId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new GetHelpRequestResponsesQuery(helpRequestId), ct)));
@@ -76,6 +76,6 @@ public static class MentorshipEndpoints
 }
 
 public sealed record CreateMentorProfileRequest(List<string> Expertise, int? YearsExperience, string? Availability);
-public sealed record CreateHelpRequestRequest(HelpRequestCategory Category, string Title, string Body, Guid? DreamId);
+public sealed record CreateHelpRequestRequest(HelpRequestCategory Category, string Title, string Body, bool AttachDream = false);
 public sealed record RespondRequest(string Body);
 public sealed record UpdateVerificationRequest(VerificationStatus Status);

@@ -141,17 +141,19 @@ describe("dreamStatementSchema", () => {
 describe("createPostSchema", () => {
   it("accepts each valid visibility value", () => {
     for (const visibility of ["private", "community", "public"] as const) {
-      expect(createPostSchema.safeParse({ body: "Hello", visibility }).success).toBe(true);
+      expect(
+        createPostSchema.safeParse({ body: "Hello", visibility, attachDream: false }).success,
+      ).toBe(true);
     }
   });
 
   it("rejects a visibility value outside the enum", () => {
-    const result = createPostSchema.safeParse({ body: "Hello", visibility: "everyone" });
+    const result = createPostSchema.safeParse({ body: "Hello", visibility: "everyone", attachDream: false });
     expect(result.success).toBe(false);
   });
 
   it("rejects an empty body", () => {
-    const result = createPostSchema.safeParse({ body: "", visibility: "public" });
+    const result = createPostSchema.safeParse({ body: "", visibility: "public", attachDream: false });
     expect(result.success).toBe(false);
   });
 });
@@ -179,7 +181,9 @@ describe("becomeMentorSchema", () => {
 });
 
 describe("createHelpRequestSchema", () => {
-  const valid = { category: "marketing", title: "Need help", body: "Where do I find customers?" } as const;
+  const valid = {
+    category: "marketing", title: "Need help", body: "Where do I find customers?", attachDream: false,
+  } as const;
 
   it("accepts every valid category", () => {
     for (const category of [
