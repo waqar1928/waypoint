@@ -152,3 +152,20 @@ export const respondToHelpRequestSchema = z.object({
   body: z.string().min(1, "Write a response").max(2000, "Keep this under 2000 characters"),
 });
 export type RespondToHelpRequestInput = z.infer<typeof respondToHelpRequestSchema>;
+
+export const notificationPreferencesSchema = z.object({
+  emailProductUpdates: z.boolean(),
+  emailCoachNudges: z.boolean(),
+  emailCommunityActivity: z.boolean(),
+});
+export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;
+
+/** Matches Waypoint.Users.Domain.VisibilityLevel exactly (camelCase, per the API's default JSON
+ * enum naming policy - see Program.cs's JsonStringEnumConverter(JsonNamingPolicy.CamelCase)). */
+export const visibilityLevelSchema = z.enum(["private", "followers", "community", "public"]);
+export type VisibilityLevel = z.infer<typeof visibilityLevelSchema>;
+export const privacySettingsSchema = z.object({
+  profileVisibility: visibilityLevelSchema,
+  dreamVisibility: visibilityLevelSchema,
+});
+export type PrivacySettingsInput = z.infer<typeof privacySettingsSchema>;
