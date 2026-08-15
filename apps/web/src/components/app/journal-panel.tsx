@@ -48,7 +48,11 @@ export function JournalPanel({ initialEntries }: { initialEntries: JournalEntry[
   };
 
   return (
-    <Card>
+    // id="journal" is the target of the sidebar's Journal nav link (nav-items.ts points at
+    // /app/dashboard#journal) — this panel has always been the real Journal feature, there's just
+    // never been a dedicated /app/journal route. See docs/DREVIA_PRODUCT_SPECIFICATION.md's
+    // Journal section for why the nav used to say "Soon" here.
+    <Card id="journal">
       <h2 className="font-display text-lg font-semibold text-ink-900">Journal</h2>
       <p className="mt-1 text-sm text-ink-500">A private space for reflection. Only you can see this.</p>
 
