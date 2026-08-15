@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+// Zod's object schemas opportunistically JIT-compile a faster validator via `new Function(...)`,
+// probing once at startup whether that's even possible. Under this app's CSP (script-src has no
+// 'unsafe-eval' — see middleware.ts) the probe throws, and Zod catches it internally and falls
+// back to its normal (always-correct, slightly slower) validation path with no functional impact.
+// But Chrome's CSP enforcement reports the caught `new Function` as a securitypolicyviolation
+// regardless of it being caught — this is a known upstream issue (zod#4461, zod#5414; see
+// node_modules/zod/src/v4/core/util.ts's `allowsEval` and its own regression test,
+// jitless-allows-eval.test.ts). `jitless: true` makes Zod skip the probe entirely instead of
+// attempting-and-catching it, which is the maintainers' own sanctioned fix — not a CSP weakening,
+// and not a validation-behavior change (this schema module is the single place every z.object()
+// in the app is defined, and this call must run before any of them, per Zod's own contract).
+z.config({ jitless: true });
+
 export const registerSchema = z.object({
   displayName: z.string().min(1, "Enter your name").max(120, "Name is too long"),
   email: z.string().min(1, "Enter your email").email("Enter a valid email address"),
