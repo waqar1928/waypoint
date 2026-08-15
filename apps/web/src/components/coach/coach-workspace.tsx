@@ -27,16 +27,19 @@ export function CoachWorkspace({
   const [isSending, setIsSending] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Opt-in per conversation, not a saved preference - the user decides fresh each time. Defaults
+  // to off so a normal "New conversation" click behaves exactly as it always has.
+  const [includeProgressContext, setIncludeProgressContext] = useState(false);
   const hasAutoStarted = useRef(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
-  const startConversation = async (topic: AiConversationTopic) => {
+  const startConversation = async (topic: AiConversationTopic, includeProgress = false) => {
     setIsStarting(true);
     setError(null);
     const response = await apiMutate("/api/ai/conversations", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify({ topic, includeProgressContext: includeProgress }),
     });
     setIsStarting(false);
 
@@ -119,9 +122,26 @@ export function CoachWorkspace({
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
       <div className="space-y-3">
-        <Button onClick={() => startConversation("coach")} isLoading={isStarting} className="w-full">
+        <Button
+          onClick={() => startConversation("coach", includeProgressContext)}
+          isLoading={isStarting}
+          className="w-full"
+        >
           New conversation
         </Button>
+        {/* Opt-in, off by default, decided fresh per conversation - see the state comment above.
+            Only affects the general Coach topic (this button); Dream Analysis and Challenge My
+            Idea already have their own fixed, single-purpose context and ignore this flag even if
+            it were sent, per StartConversationCommandHandler. */}
+        <label className="flex items-start gap-2 text-xs text-ink-500">
+          <input
+            type="checkbox"
+            checked={includeProgressContext}
+            onChange={(e) => setIncludeProgressContext(e.target.checked)}
+            className="mt-0.5 h-3.5 w-3.5 rounded border-ink-300"
+          />
+          <span>Let Coach see my recent actions and experiments, not just my Dream</span>
+        </label>
         {conversations.length > 0 ? (
           <ul className="space-y-1.5">
             {conversations.map((c) => (

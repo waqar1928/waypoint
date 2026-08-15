@@ -29,7 +29,9 @@ public static class AiEndpoints
             .RequireRateLimiting("api");
 
         group.MapPost("/conversations", async (StartConversationRequest body, ISender sender, CancellationToken ct) =>
-            Results.Created("/api/v1/ai/conversations", await sender.Send(new StartConversationCommand(body.Topic), ct)))
+            Results.Created(
+                "/api/v1/ai/conversations",
+                await sender.Send(new StartConversationCommand(body.Topic, body.IncludeProgressContext), ct)))
             .RequireRateLimiting("ai");
 
         group.MapGet("/conversations/{conversationId:guid}/messages", async (Guid conversationId, ISender sender, CancellationToken ct) =>
@@ -51,5 +53,5 @@ public static class AiEndpoints
     }
 }
 
-public sealed record StartConversationRequest(AiConversationTopic Topic);
+public sealed record StartConversationRequest(AiConversationTopic Topic, bool IncludeProgressContext = false);
 public sealed record SendMessageRequest(string Content);

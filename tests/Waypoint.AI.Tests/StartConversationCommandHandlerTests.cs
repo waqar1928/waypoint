@@ -14,13 +14,16 @@ public class StartConversationCommandHandlerTests
     private readonly IAiService _aiService = Substitute.For<IAiService>();
     private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly IBusinessIdeaSummaryProvider _businessIdeaSummaryProvider = Substitute.For<IBusinessIdeaSummaryProvider>();
+    private readonly IActionsSummaryProvider _actionsSummaryProvider = Substitute.For<IActionsSummaryProvider>();
+    private readonly IExperimentsSummaryProvider _experimentsSummaryProvider = Substitute.For<IExperimentsSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _dreamId = Guid.NewGuid();
 
     private StartConversationCommandHandler CreateHandler() =>
-        new(_repository, _aiService, _dreamSummaryProvider, _businessIdeaSummaryProvider, _currentUser, _analyticsSink);
+        new(_repository, _aiService, _dreamSummaryProvider, _businessIdeaSummaryProvider,
+            _actionsSummaryProvider, _experimentsSummaryProvider, _currentUser, _analyticsSink);
 
     private void ArrangeSignedInUser(DreamSummary? dream)
     {
@@ -72,5 +75,81 @@ public class StartConversationCommandHandlerTests
             Arg.Any<CancellationToken>());
         await _repository.Received(1).AddMessageAsync(
             Arg.Is<AiMessage>(m => m.Role == AiMessageRole.Assistant), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Does_not_call_the_progress_summary_providers_when_IncludeProgressContext_is_false()
+    {
+        var dream = new DreamSummary(_dreamId, _userId, "Cut waste for shops", "Statement", null, null, null, null, null, null, false);
+        ArrangeSignedInUser(dream);
+        _aiService.CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new AiResponse("Hi!", 10, 8, "claude-test", false));
+
+        await CreateHandler().Handle(new StartConversationCommand(AiConversationTopic.Coach), CancellationToken.None);
+
+        // IncludeProgressContext defaults to false - the whole point of this being opt-in is that
+        // a normal conversation start never touches Actions/Experiments data at all, not just that
+        // it's excluded from the prompt.
+        await _actionsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _experimentsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Includes_actions_and_experiments_in_the_kickoff_message_when_opted_in()
+    {
+        var dream = new DreamSummary(_dreamId, _userId, "Cut waste for shops", "Statement", null, null, null, null, null, null, false);
+        ArrangeSignedInUser(dream);
+        _actionsSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(
+            new ActionsSummary([new ActionSummaryItem("Call three shop owners", "InProgress", IsNextBestAction: true)]));
+        _experimentsSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(
+            new ExperimentsSummary([new ExperimentSummaryItem("Post in a local business group", "Completed", "Validated", "People are interested")]));
+        _aiService.CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new AiResponse("Hi!", 10, 8, "claude-test", false));
+
+        await CreateHandler().Handle(
+            new StartConversationCommand(AiConversationTopic.Coach, IncludeProgressContext: true), CancellationToken.None);
+
+        await _aiService.Received(1).CompleteAsync(
+            Arg.Is<AiRequest>(r =>
+                r.Variables["message"].Contains("Call three shop owners") &&
+                r.Variables["message"].Contains("next best action") &&
+                r.Variables["message"].Contains("Post in a local business group") &&
+                r.Variables["message"].Contains("Validated")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Does_not_add_an_empty_progress_sentence_when_opted_in_but_nothing_exists_yet()
+    {
+        var dream = new DreamSummary(_dreamId, _userId, "Cut waste for shops", "Statement", null, null, null, null, null, null, false);
+        ArrangeSignedInUser(dream);
+        _actionsSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(new ActionsSummary([]));
+        _experimentsSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(new ExperimentsSummary([]));
+        _aiService.CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new AiResponse("Hi!", 10, 8, "claude-test", false));
+
+        await CreateHandler().Handle(
+            new StartConversationCommand(AiConversationTopic.Coach, IncludeProgressContext: true), CancellationToken.None);
+
+        await _aiService.Received(1).CompleteAsync(
+            Arg.Is<AiRequest>(r => r.Variables["message"] == "Say hello and ask what's on my mind today. My dream so far, in case it's useful: \"Cut waste for shops\"."),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Does_not_include_progress_context_for_the_dream_analysis_topic_even_when_opted_in()
+    {
+        var dream = new DreamSummary(_dreamId, _userId, "Cut waste for shops", "Statement", null, null, null, null, null, null, false);
+        ArrangeSignedInUser(dream);
+        _aiService.CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new AiResponse("Hi!", 10, 8, "claude-test", false));
+
+        await CreateHandler().Handle(
+            new StartConversationCommand(AiConversationTopic.DreamAnalysis, IncludeProgressContext: true), CancellationToken.None);
+
+        // Progress context is deliberately scoped to the general Coach topic only - see the doc
+        // comment on BuildKickoffAsync's default case.
+        await _actionsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _experimentsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 }

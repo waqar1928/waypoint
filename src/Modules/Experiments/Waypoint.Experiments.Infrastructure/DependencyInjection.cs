@@ -20,6 +20,7 @@ public static class DependencyInjection
                 .AddInterceptors(new AuditableEntitySaveChangesInterceptor()));
 
         services.AddScoped<IExperimentsRepository, ExperimentsRepository>();
+        services.AddScoped<IExperimentsSummaryProvider, ExperimentsSummaryProvider>();
         services.AddScoped<IStartupMigrator, ExperimentsStartupMigrator>();
 
         return services;

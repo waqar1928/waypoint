@@ -5,7 +5,15 @@ using Waypoint.Common;
 
 namespace Waypoint.AI.Application.StartConversation;
 
-public sealed record StartConversationCommand(AiConversationTopic Topic) : IRequest<ConversationDto>;
+/// <summary>
+/// IncludeProgressContext defaults to false and is entirely opt-in per conversation, not a
+/// persistent setting - the user decides fresh each time they start a Coach conversation whether
+/// to let it see a snapshot of their current Actions/Experiments alongside their Dream. See
+/// StartConversationCommandHandler.BuildProgressContextAsync for what "snapshot" actually means
+/// here (bounded, summarized, not a data dump).
+/// </summary>
+public sealed record StartConversationCommand(AiConversationTopic Topic, bool IncludeProgressContext = false)
+    : IRequest<ConversationDto>;
 
 public sealed class StartConversationCommandValidator : AbstractValidator<StartConversationCommand>
 {
@@ -20,6 +28,8 @@ public sealed class StartConversationCommandHandler(
     IAiService aiService,
     IDreamSummaryProvider dreamSummaryProvider,
     IBusinessIdeaSummaryProvider businessIdeaSummaryProvider,
+    IActionsSummaryProvider actionsSummaryProvider,
+    IExperimentsSummaryProvider experimentsSummaryProvider,
     ICurrentUserAccessor currentUser,
     IProductAnalyticsSink analyticsSink)
     : IRequestHandler<StartConversationCommand, ConversationDto>
@@ -31,7 +41,8 @@ public sealed class StartConversationCommandHandler(
         var userId = currentUser.UserId ?? throw new AuthenticationFailedException("Not signed in.");
         var dream = await dreamSummaryProvider.GetForUserAsync(userId, cancellationToken);
 
-        var (templateKey, kickoffMessage) = await BuildKickoffAsync(request.Topic, dream, userId, cancellationToken);
+        var (templateKey, kickoffMessage) = await BuildKickoffAsync(
+            request.Topic, request.IncludeProgressContext, dream, userId, cancellationToken);
 
         var conversation = AiConversation.Create(userId, dream?.DreamId, request.Topic, title: null);
         await repository.AddConversationAsync(conversation, cancellationToken);
@@ -71,7 +82,8 @@ public sealed class StartConversationCommandHandler(
     }
 
     private async Task<(string TemplateKey, string KickoffMessage)> BuildKickoffAsync(
-        AiConversationTopic topic, DreamSummary? dream, Guid userId, CancellationToken cancellationToken)
+        AiConversationTopic topic, bool includeProgressContext, DreamSummary? dream, Guid userId,
+        CancellationToken cancellationToken)
     {
         switch (topic)
         {
@@ -88,11 +100,65 @@ public sealed class StartConversationCommandHandler(
                 return ("challenge-my-idea.v1", BuildIdeaKickoff(idea));
 
             default:
-                var greeting = dream is not null
-                    ? $"Say hello and ask what's on my mind today. My dream so far, in case it's useful: \"{dream.Title}\"."
-                    : "Say hello and ask what's on my mind today. I haven't started a Dream yet.";
-                return ("coach.v1", greeting);
+                // Progress context (Actions/Experiments) is scoped to the general Coach topic only,
+                // not Dream Analysis or Challenge My Idea - both of those already have a single,
+                // tight focus (the Dream Statement; the business idea), and mixing in unrelated
+                // action/experiment noise would dilute the one thing the user actually asked for.
+                // "What am I working on right now" is a general-coaching question, so that's where
+                // this belongs.
+                var parts = new List<string>
+                {
+                    dream is not null
+                        ? $"Say hello and ask what's on my mind today. My dream so far, in case it's useful: \"{dream.Title}\"."
+                        : "Say hello and ask what's on my mind today. I haven't started a Dream yet.",
+                };
+
+                if (includeProgressContext)
+                {
+                    var progressContext = await BuildProgressContextAsync(userId, cancellationToken);
+                    if (progressContext is not null)
+                    {
+                        parts.Add(progressContext);
+                    }
+                }
+
+                return ("coach.v1", string.Join(" ", parts));
         }
+    }
+
+    /// <summary>
+    /// Builds the optional "here's what I'm actually working on" context for the general Coach
+    /// topic. This lands in the *user* message slot alongside the greeting instruction, same as
+    /// the Dream/BusinessIdea context already does — it's the user's own data being summarized
+    /// back to Coach, not a system-level instruction, so the existing prompt-injection mitigation
+    /// (docs/07-technical-architecture.md: user content only ever goes in the user slot) still
+    /// holds. Returns null (rather than an empty string) when there's nothing worth mentioning, so
+    /// the caller can skip adding a pointless empty sentence to the kickoff message.
+    /// </summary>
+    private async Task<string?> BuildProgressContextAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var actions = await actionsSummaryProvider.GetForUserAsync(userId, cancellationToken);
+        var experiments = await experimentsSummaryProvider.GetForUserAsync(userId, cancellationToken);
+
+        var parts = new List<string>();
+
+        if (actions is { RecentActions.Count: > 0 })
+        {
+            var actionLines = actions.RecentActions.Select(a =>
+                a.IsNextBestAction ? $"\"{a.Title}\" (next best action, {a.Status})" : $"\"{a.Title}\" ({a.Status})");
+            parts.Add($"Here's what I'm actually working on right now: {string.Join("; ", actionLines)}.");
+        }
+
+        if (experiments is { RecentExperiments.Count: > 0 })
+        {
+            var experimentLines = experiments.RecentExperiments.Select(e =>
+                e.LatestOutcome is not null
+                    ? $"\"{e.IdeaDescription}\" ({e.Status}, result so far: {e.LatestOutcome})"
+                    : $"\"{e.IdeaDescription}\" ({e.Status})");
+            parts.Add($"My recent experiments: {string.Join("; ", experimentLines)}.");
+        }
+
+        return parts.Count > 0 ? string.Join(" ", parts) : null;
     }
 
     private static string BuildDreamKickoff(DreamSummary dream)

@@ -91,6 +91,36 @@ public interface IBusinessIdeaSummaryProvider
 }
 
 /// <summary>
+/// Cross-module read contract owned by the Actions module. Lets AI Coach optionally include a
+/// snapshot of what the user is actually working on in a conversation's opening context, not just
+/// their Dream Statement (see StartConversationCommand's IncludeProgressContext flag — opt-in per
+/// conversation, off by default). Deliberately a small, bounded summary rather than the full
+/// action list, since this gets interpolated into an AI prompt, not rendered as a page — the
+/// summary's job is to describe what's going on, not enumerate everything.
+/// </summary>
+public sealed record ActionSummaryItem(string Title, string Status, bool IsNextBestAction);
+
+public sealed record ActionsSummary(IReadOnlyList<ActionSummaryItem> RecentActions);
+
+public interface IActionsSummaryProvider
+{
+    Task<ActionsSummary?> GetForUserAsync(Guid userId, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// Cross-module read contract owned by the Experiments module — same reasoning and same opt-in
+/// flag as IActionsSummaryProvider.
+/// </summary>
+public sealed record ExperimentSummaryItem(string IdeaDescription, string Status, string? LatestOutcome, string? LatestLearning);
+
+public sealed record ExperimentsSummary(IReadOnlyList<ExperimentSummaryItem> RecentExperiments);
+
+public interface IExperimentsSummaryProvider
+{
+    Task<ExperimentsSummary?> GetForUserAsync(Guid userId, CancellationToken cancellationToken);
+}
+
+/// <summary>
 /// Cross-cutting content-report port (Phase 7) — same pattern as IAuditSink. Community owns the
 /// actual content_reports table and implements this; Mentorship (help requests) files reports
 /// through the interface only, so it never needs a direct reference to Community's tables. Phase
