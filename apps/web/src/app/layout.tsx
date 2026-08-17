@@ -32,6 +32,30 @@ export const metadata: Metadata = {
   description,
   openGraph: { title, description, type: "website", siteName: "Drevia" },
   twitter: { card: "summary", title, description },
+  // The Drevia mark (the compass symbol alone, no wordmark) rendered at every size browsers and
+  // OSes actually request — see public/favicon.svg for the single source of truth all of these
+  // are generated from. favicon.svg comes first so browsers that support vector favicons
+  // (Chrome, Firefox, Edge) get a crisp icon at any pixel density; the PNGs are the fallback for
+  // browsers that don't (older Safari) and for the sizes those OSes ask for by convention.
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    // iOS ignores the icon[] list above and only ever looks for this — 180x180 is Apple's own
+    // spec size for the largest modern device class, and iOS downsamples it for smaller ones.
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    // Legacy fallback for user agents that request /favicon.ico directly rather than reading
+    // <link rel="icon">. src/app/favicon.ico is this same mark at 16/32/48 in one file.
+    shortcut: ["/favicon.ico"],
+  },
+  // Android's "Add to Home screen" and general PWA metadata (name, theme color, 192/512 icons)
+  // reads from this rather than the <link> tags above.
+  manifest: "/site.webmanifest",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
