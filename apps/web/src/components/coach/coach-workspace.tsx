@@ -140,7 +140,7 @@ export function CoachWorkspace({
             onChange={(e) => setIncludeProgressContext(e.target.checked)}
             className="mt-0.5 h-3.5 w-3.5 rounded border-ink-300"
           />
-          <span>Let Coach see my recent actions and experiments, not just my Dream</span>
+          <span>Let Coach see my recent actions, experiments, and learnings, not just my Dream</span>
         </label>
         {conversations.length > 0 ? (
           <ul className="space-y-1.5">

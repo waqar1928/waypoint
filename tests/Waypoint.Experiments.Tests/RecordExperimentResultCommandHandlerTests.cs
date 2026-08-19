@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 using Waypoint.Common;
 using Waypoint.Experiments.Application;
@@ -14,11 +15,12 @@ public class RecordExperimentResultCommandHandlerTests
     private readonly IDreamSummaryProvider _dreamSummaryProvider = Substitute.For<IDreamSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly IAuditSink _auditSink = Substitute.For<IAuditSink>();
+    private readonly IPublisher _publisher = Substitute.For<IPublisher>();
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _dreamId = Guid.NewGuid();
 
     private RecordExperimentResultCommandHandler CreateHandler() =>
-        new(_repository, _dreamSummaryProvider, _currentUser, _auditSink);
+        new(_repository, _dreamSummaryProvider, _currentUser, _auditSink, _publisher);
 
     private void ArrangeSignedInUserWithDream()
     {
@@ -46,6 +48,23 @@ public class RecordExperimentResultCommandHandlerTests
             Arg.Is<ExperimentResult>(r => r.Outcome == ExperimentOutcome.Validated && r.Learning == "People want this"),
             Arg.Any<CancellationToken>());
         await _auditSink.Received(1).RecordAsync(Arg.Any<AuditEntry>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Publishes_learning_captured_so_it_becomes_a_journal_entry()
+    {
+        ArrangeSignedInUserWithDream();
+        var experiment = Experiment.Create(_dreamId, _userId, "Try a thing", "It will work", "5 signups");
+        _repository.GetByIdAsync(experiment.Id, Arg.Any<CancellationToken>()).Returns(experiment);
+        _repository.GetResultsForExperimentsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var command = new RecordExperimentResultCommand(experiment.Id, ExperimentOutcome.Validated, "Got 5 signups", "People want this");
+        await CreateHandler().Handle(command, CancellationToken.None);
+
+        await _publisher.Received(1).Publish(
+            Arg.Is<LearningCapturedIntegrationEvent>(e => e.UserId == _userId && e.DreamId == _dreamId && e.Body == "People want this"),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

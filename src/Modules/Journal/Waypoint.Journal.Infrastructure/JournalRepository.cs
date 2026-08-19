@@ -21,6 +21,15 @@ public sealed class JournalRepository(JournalDbContext db) : IJournalRepository
             .Take(take)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<JournalEntry>> GetRecentLessonsForUserAsync(
+        Guid userId, int take, CancellationToken cancellationToken) =>
+        await db.JournalEntries
+            .AsNoTracking()
+            .Where(e => e.UserId == userId && e.DeletedAt == null && e.EntryType == JournalEntryType.Lesson)
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+
     public async Task DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken)
     {
         // Not filtered on DeletedAt == null — every entry for this user gets actually purged,

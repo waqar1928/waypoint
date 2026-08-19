@@ -30,6 +30,7 @@ public sealed class StartConversationCommandHandler(
     IBusinessIdeaSummaryProvider businessIdeaSummaryProvider,
     IActionsSummaryProvider actionsSummaryProvider,
     IExperimentsSummaryProvider experimentsSummaryProvider,
+    IJournalSummaryProvider journalSummaryProvider,
     ICurrentUserAccessor currentUser,
     IProductAnalyticsSink analyticsSink)
     : IRequestHandler<StartConversationCommand, ConversationDto>
@@ -139,6 +140,7 @@ public sealed class StartConversationCommandHandler(
     {
         var actions = await actionsSummaryProvider.GetForUserAsync(userId, cancellationToken);
         var experiments = await experimentsSummaryProvider.GetForUserAsync(userId, cancellationToken);
+        var journal = await journalSummaryProvider.GetForUserAsync(userId, cancellationToken);
 
         var parts = new List<string>();
 
@@ -151,11 +153,23 @@ public sealed class StartConversationCommandHandler(
 
         if (experiments is { RecentExperiments.Count: > 0 })
         {
+            // LatestLearning used to be fetched here and silently dropped - the experiment line
+            // mentioned the outcome (validated/invalidated/etc.) but never what was actually
+            // learned, which is the part a coaching conversation can actually use.
             var experimentLines = experiments.RecentExperiments.Select(e =>
-                e.LatestOutcome is not null
-                    ? $"\"{e.IdeaDescription}\" ({e.Status}, result so far: {e.LatestOutcome})"
-                    : $"\"{e.IdeaDescription}\" ({e.Status})");
+                (e.LatestOutcome, e.LatestLearning) switch
+                {
+                    (not null, not null) => $"\"{e.IdeaDescription}\" ({e.Status}, result so far: {e.LatestOutcome} - learned: {e.LatestLearning})",
+                    (not null, null) => $"\"{e.IdeaDescription}\" ({e.Status}, result so far: {e.LatestOutcome})",
+                    _ => $"\"{e.IdeaDescription}\" ({e.Status})",
+                });
             parts.Add($"My recent experiments: {string.Join("; ", experimentLines)}.");
+        }
+
+        if (journal is { RecentLessons.Count: > 0 })
+        {
+            var lessonLines = journal.RecentLessons.Select(l => $"\"{l.Body}\"");
+            parts.Add($"Some things I've learned along the way: {string.Join("; ", lessonLines)}.");
         }
 
         return parts.Count > 0 ? string.Join(" ", parts) : null;

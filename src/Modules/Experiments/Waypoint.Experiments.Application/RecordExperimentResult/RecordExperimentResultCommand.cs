@@ -21,7 +21,7 @@ public sealed class RecordExperimentResultCommandValidator : AbstractValidator<R
 
 public sealed class RecordExperimentResultCommandHandler(
     IExperimentsRepository repository, IDreamSummaryProvider dreamSummaryProvider,
-    ICurrentUserAccessor currentUser, IAuditSink auditSink)
+    ICurrentUserAccessor currentUser, IAuditSink auditSink, IPublisher publisher)
     : IRequestHandler<RecordExperimentResultCommand, ExperimentDto>
 {
     public async Task<ExperimentDto> Handle(RecordExperimentResultCommand request, CancellationToken cancellationToken)
@@ -48,6 +48,13 @@ public sealed class RecordExperimentResultCommandHandler(
         await auditSink.RecordAsync(
             new AuditEntry("Experiment", experiment.Id, "ResultRecorded", userId, null, DateTimeOffset.UtcNow),
             cancellationToken);
+
+        // Learning is required on every result (see the validator above) — this is what actually
+        // closes the loop the doc comment on ExperimentResult once described but nothing built:
+        // every recorded learning becomes a Journal entry, so it shows up somewhere the user can
+        // see it again later instead of staying locked inside this one experiment's card.
+        await publisher.Publish(
+            new LearningCapturedIntegrationEvent(userId, dream.DreamId, request.Learning), cancellationToken);
 
         var results = await repository.GetResultsForExperimentsAsync([experiment.Id], cancellationToken);
         return ExperimentDto.From(experiment, results);

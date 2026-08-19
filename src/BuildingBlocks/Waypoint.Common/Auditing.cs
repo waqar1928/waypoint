@@ -135,6 +135,25 @@ public interface IExperimentsSummaryProvider
 }
 
 /// <summary>
+/// Cross-module read contract owned by the Journal module — same reasoning, same opt-in flag
+/// (IncludeProgressContext), and same bounded-summary-for-a-prompt shape as
+/// IActionsSummaryProvider/IExperimentsSummaryProvider. Only Lesson-type entries are ever returned
+/// here (see JournalEntryType) — Daily/Weekly/Win/Failure/Idea/Gratitude/Vision entries are
+/// reflection, not something the Coach needs to reason from, and Journal entries in general stay
+/// private by default; this exists specifically so a learning someone already chose to record (via
+/// an Experiment result or an Action reflection — see LearningCapturedIntegrationEvent) can inform
+/// a conversation they've explicitly opted into sharing progress for.
+/// </summary>
+public sealed record LessonSummaryItem(string Body, DateTimeOffset CreatedAt);
+
+public sealed record JournalSummary(IReadOnlyList<LessonSummaryItem> RecentLessons);
+
+public interface IJournalSummaryProvider
+{
+    Task<JournalSummary?> GetForUserAsync(Guid userId, CancellationToken cancellationToken);
+}
+
+/// <summary>
 /// Cross-cutting content-report port (Phase 7) — same pattern as IAuditSink. Community owns the
 /// actual content_reports table and implements this; Mentorship (help requests) files reports
 /// through the interface only, so it never needs a direct reference to Community's tables. Phase

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
+using Waypoint.Actions.Application.AddActionReflection;
 using Waypoint.Actions.Application.CreateAction;
 using Waypoint.Actions.Application.GetMyActions;
 using Waypoint.Actions.Application.GetNextBestAction;
@@ -42,6 +43,12 @@ public static class ActionsEndpoints
         group.MapPost("/{actionId:guid}/set-next-best", async (Guid actionId, ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new SetNextBestActionCommand(actionId), ct)));
 
+        group.MapPost("/{actionId:guid}/reflection", async (Guid actionId, AddActionReflectionRequest body, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AddActionReflectionCommand(actionId, body.WhatHappened, body.Learning), ct);
+            return Results.NoContent();
+        });
+
         return app;
     }
 }
@@ -51,3 +58,4 @@ public sealed record UpdateActionRequest(
     int? EstimatedMinutes, ActionImpact ExpectedImpact, DateOnly? DueDate);
 
 public sealed record UpdateActionStatusRequest(ActionStatus Status);
+public sealed record AddActionReflectionRequest(string? WhatHappened, string? Learning);

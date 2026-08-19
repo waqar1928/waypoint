@@ -12,6 +12,10 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
   const [actions, setActions] = useState(initialActions);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set only right after the user themselves marks an action completed (not on initial load, and
+  // not for any other status change) - this is what triggers the optional "what happened / what
+  // did you learn" prompt in ActionRow. Cleared by either submitting or skipping that prompt.
+  const [reflectingActionId, setReflectingActionId] = useState<string | null>(null);
 
   const handleCreate = async (values: CreateActionInput) => {
     setError(null);
@@ -47,6 +51,20 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
     }
     const updated = (await response.json()) as WaypointAction;
     setActions((current) => current.map((a) => (a.id === actionId ? updated : a)));
+    setReflectingActionId(status === "completed" ? actionId : null);
+  };
+
+  const handleAddReflection = async (actionId: string, whatHappened: string, learning: string) => {
+    const response = await apiMutate(`/api/actions/${actionId}/reflection`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ whatHappened: whatHappened || null, learning: learning || null }),
+    });
+    if (!response.ok) {
+      setError("We couldn't save that. Please try again.");
+      return;
+    }
+    setReflectingActionId(null);
   };
 
   const handleSetNextBest = async (actionId: string) => {
@@ -85,6 +103,9 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
                 action={action}
                 onStatusChange={(status) => handleStatusChange(action.id, status)}
                 onSetNextBest={() => handleSetNextBest(action.id)}
+                isReflecting={action.id === reflectingActionId}
+                onAddReflection={(whatHappened, learning) => handleAddReflection(action.id, whatHappened, learning)}
+                onDismissReflection={() => setReflectingActionId(null)}
               />
             </li>
           ))}

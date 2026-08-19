@@ -19,6 +19,10 @@ export interface WaypointAction {
   isNextBestAction: boolean;
   goalId: string | null;
   missionId: string | null;
+  /** A one-line, plain-language reason this is the recommended next move - only ever set on the
+   * result of getNextBestAction(), null everywhere else. See NextBestActionSelector on the
+   * backend for how it's computed. */
+  rationale: string | null;
 }
 
 async function serverFetch<T>(path: string): Promise<T | null> {

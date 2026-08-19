@@ -107,6 +107,9 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 builder.Services.AddSingleton<IProductAnalyticsSink, LoggingProductAnalyticsSink>();
+// The real system clock, injected wherever "today"/"now" needs to be swappable in tests rather
+// than a bare DateTimeOffset.UtcNow call - see NextBestActionSelector, the first consumer.
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>

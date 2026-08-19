@@ -34,3 +34,23 @@ export async function getRecentJournalEntries(): Promise<JournalEntry[]> {
     return [];
   }
 }
+
+/** Lesson-type entries only - what's actually learned, captured automatically from Experiment
+ * results and optional Action reflections, plus anything logged directly as a Lesson. Backs the
+ * Learnings feed on the Dream Overview and dashboard. */
+export async function getRecentLearnings(): Promise<JournalEntry[]> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  if (!cookieHeader) return [];
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/journal/learnings`, {
+      headers: { cookie: cookieHeader },
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+    return (await response.json()) as JournalEntry[];
+  } catch {
+    return [];
+  }
+}

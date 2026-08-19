@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Waypoint.Journal.Application.CreateJournalEntry;
 using Waypoint.Journal.Application.GetMyJournalEntries;
+using Waypoint.Journal.Application.GetRecentLearnings;
 
 namespace Waypoint.Journal.Api;
 
@@ -16,6 +17,9 @@ public static class JournalEndpoints
 
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
             Results.Ok(await sender.Send(new GetMyJournalEntriesQuery(), ct)));
+
+        group.MapGet("/learnings", async (ISender sender, CancellationToken ct) =>
+            Results.Ok(await sender.Send(new GetRecentLearningsQuery(), ct)));
 
         group.MapPost("/", async (CreateJournalEntryCommand command, ISender sender, CancellationToken ct) =>
             Results.Created("/api/v1/journal", await sender.Send(command, ct)));

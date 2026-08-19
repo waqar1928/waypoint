@@ -16,6 +16,7 @@ public class StartConversationCommandHandlerTests
     private readonly IBusinessIdeaSummaryProvider _businessIdeaSummaryProvider = Substitute.For<IBusinessIdeaSummaryProvider>();
     private readonly IActionsSummaryProvider _actionsSummaryProvider = Substitute.For<IActionsSummaryProvider>();
     private readonly IExperimentsSummaryProvider _experimentsSummaryProvider = Substitute.For<IExperimentsSummaryProvider>();
+    private readonly IJournalSummaryProvider _journalSummaryProvider = Substitute.For<IJournalSummaryProvider>();
     private readonly ICurrentUserAccessor _currentUser = Substitute.For<ICurrentUserAccessor>();
     private readonly IProductAnalyticsSink _analyticsSink = Substitute.For<IProductAnalyticsSink>();
     private readonly Guid _userId = Guid.NewGuid();
@@ -23,7 +24,7 @@ public class StartConversationCommandHandlerTests
 
     private StartConversationCommandHandler CreateHandler() =>
         new(_repository, _aiService, _dreamSummaryProvider, _businessIdeaSummaryProvider,
-            _actionsSummaryProvider, _experimentsSummaryProvider, _currentUser, _analyticsSink);
+            _actionsSummaryProvider, _experimentsSummaryProvider, _journalSummaryProvider, _currentUser, _analyticsSink);
 
     private void ArrangeSignedInUser(DreamSummary? dream)
     {
@@ -88,14 +89,15 @@ public class StartConversationCommandHandlerTests
         await CreateHandler().Handle(new StartConversationCommand(AiConversationTopic.Coach), CancellationToken.None);
 
         // IncludeProgressContext defaults to false - the whole point of this being opt-in is that
-        // a normal conversation start never touches Actions/Experiments data at all, not just that
-        // it's excluded from the prompt.
+        // a normal conversation start never touches Actions/Experiments/Journal data at all, not
+        // just that it's excluded from the prompt.
         await _actionsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await _experimentsSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _journalSummaryProvider.DidNotReceive().GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Includes_actions_and_experiments_in_the_kickoff_message_when_opted_in()
+    public async Task Includes_actions_experiments_and_learnings_in_the_kickoff_message_when_opted_in()
     {
         var dream = new DreamSummary(_dreamId, _userId, "Cut waste for shops", "Statement", null, null, null, null, null, null, false);
         ArrangeSignedInUser(dream);
@@ -103,6 +105,8 @@ public class StartConversationCommandHandlerTests
             new ActionsSummary([new ActionSummaryItem("Call three shop owners", "InProgress", IsNextBestAction: true)]));
         _experimentsSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(
             new ExperimentsSummary([new ExperimentSummaryItem("Post in a local business group", "Completed", "Validated", "People are interested")]));
+        _journalSummaryProvider.GetForUserAsync(_userId, Arg.Any<CancellationToken>()).Returns(
+            new JournalSummary([new LessonSummaryItem("Speed matters more than price", DateTimeOffset.UtcNow)]));
         _aiService.CompleteAsync(Arg.Any<AiRequest>(), Arg.Any<CancellationToken>())
             .Returns(new AiResponse("Hi!", 10, 8, "claude-test", false));
 
@@ -114,7 +118,12 @@ public class StartConversationCommandHandlerTests
                 r.Variables["message"].Contains("Call three shop owners") &&
                 r.Variables["message"].Contains("next best action") &&
                 r.Variables["message"].Contains("Post in a local business group") &&
-                r.Variables["message"].Contains("Validated")),
+                r.Variables["message"].Contains("Validated") &&
+                // The experiment's LatestLearning used to be fetched and silently dropped before
+                // this was fixed - "People are interested" is that field, and must now reach the
+                // model, not just the outcome label.
+                r.Variables["message"].Contains("People are interested") &&
+                r.Variables["message"].Contains("Speed matters more than price")),
             Arg.Any<CancellationToken>());
     }
 

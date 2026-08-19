@@ -7,6 +7,13 @@ public interface IJournalRepository
     Task AddAsync(JournalEntry entry, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetRecentForUserAsync(Guid userId, int take, CancellationToken cancellationToken);
 
+    /// <summary>Same as GetRecentForUserAsync but filtered to Lesson-type entries only - backs the
+    /// user-facing Learnings feed and IJournalSummaryProvider's Coach context. A dedicated method
+    /// rather than a filter parameter on GetRecentForUserAsync, matching this codebase's habit of
+    /// small purpose-named repository methods (see IActionsRepository.GetNextBestActionAsync
+    /// alongside GetForDreamAsync).</summary>
+    Task<IReadOnlyList<JournalEntry>> GetRecentLessonsForUserAsync(Guid userId, int take, CancellationToken cancellationToken);
+
     /// <summary>Real hard delete, not filtered on DeletedAt — backs account deletion (see
     /// docs/PRODUCTION_READINESS_AUDIT.md's Data Protection section). Journal entries are always
     /// private (no sharing mechanism exists anywhere in this codebase), so this is the only place

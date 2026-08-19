@@ -30,3 +30,13 @@ public sealed record UserDeletedIntegrationEvent(Guid UserId, Guid? DreamId) : I
 
 /// <summary>Published by Dreams when a user completes Discover/Define (their first Dream + Dream Statement is saved).</summary>
 public sealed record OnboardingCompletedIntegrationEvent(Guid UserId) : INotification;
+
+/// <summary>
+/// Published whenever a user writes down something they learned somewhere other than the Journal
+/// itself — today that's Experiments (RecordExperimentResultCommand's required Learning field) and
+/// Actions (AddActionReflectionCommand's optional reflection on completion). Journal handles this
+/// by writing a Lesson-type entry, which is what turns "learnings" from something trapped inside
+/// one experiment's card into something that shows up in a single place. Not published when someone
+/// writes a Journal entry directly — that's already a Journal entry, nothing needs to react to it.
+/// </summary>
+public sealed record LearningCapturedIntegrationEvent(Guid UserId, Guid DreamId, string Body) : INotification;

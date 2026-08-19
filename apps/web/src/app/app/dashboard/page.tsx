@@ -4,9 +4,9 @@ import { Card } from "@/components/ui/card";
 import { buttonClasses } from "@/components/ui/button";
 import { getProfile } from "@/lib/profile";
 import { getMyDream } from "@/lib/dream";
-import { getRecentJournalEntries } from "@/lib/journal";
+import { getRecentJournalEntries, getRecentLearnings } from "@/lib/journal";
 import { getMyPlan, getMyMilestones } from "@/lib/plan";
-import { getNextBestAction } from "@/lib/actions";
+import { getNextBestAction, getMyActions } from "@/lib/actions";
 import { getMyExperiments } from "@/lib/experiments";
 import { getMyBusinessValidations } from "@/lib/business";
 import { getMyConversations } from "@/lib/coach";
@@ -29,7 +29,7 @@ const arcLabels: Record<(typeof arcStages)[number], string> = {
 export default async function DashboardPage() {
   const [
     profile, dream, journalEntries, plan, milestones, nextBestAction, experiments,
-    businessValidations, conversations, myPosts, myHelpRequests,
+    businessValidations, conversations, myPosts, myHelpRequests, actions, learnings,
   ] = await Promise.all([
     getProfile(),
     getMyDream(),
@@ -42,12 +42,15 @@ export default async function DashboardPage() {
     getMyConversations(),
     getMyPosts(),
     getMyHelpRequests(),
+    getMyActions(),
+    getRecentLearnings(),
   ]);
   const latestViability = businessValidations[0] ?? null;
 
   const firstName = profile?.displayName?.split(" ")[0] ?? "there";
   const currentStage = dream?.stage ?? "discover";
   const mission = plan?.missions[0];
+  const actionsCompleted = actions.filter((a) => a.status === "completed").length;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
@@ -125,7 +128,13 @@ export default async function DashboardPage() {
             ) : null}
           </Card>
         ) : (
-          <EmptyStateCard icon={Compass} title="Your Dream" description="You haven't started Dream Discovery yet." />
+          <EmptyStateCard
+            icon={Compass}
+            title="Your Dream"
+            description="Start with the idea you've been thinking about."
+            ctaLabel="Add your dream"
+            ctaHref="/onboarding"
+          />
         )}
 
         {mission ? (
@@ -139,6 +148,8 @@ export default async function DashboardPage() {
             icon={ListChecks}
             title="Current Mission"
             description="Missions appear once you draft your plan."
+            ctaLabel="Draft your plan"
+            ctaHref="/app/plan"
           />
         )}
 
@@ -241,6 +252,15 @@ export default async function DashboardPage() {
             </li>
           ))}
         </ol>
+        {dream ? (
+          <p className="mt-5 border-t border-ink-300 pt-4 text-sm text-ink-700">
+            {actionsCompleted} {actionsCompleted === 1 ? "action" : "actions"} completed
+            {" · "}
+            {experiments.length} {experiments.length === 1 ? "experiment" : "experiments"} run
+            {" · "}
+            {learnings.length} {learnings.length === 1 ? "thing" : "things"} learned
+          </p>
+        ) : null}
       </Card>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -255,16 +275,25 @@ function EmptyStateCard({
   icon: Icon,
   title,
   description,
+  ctaLabel,
+  ctaHref,
 }: {
   icon: typeof Compass;
   title: string;
   description: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }) {
   return (
     <Card>
       <Icon className="h-5 w-5 text-ink-500" aria-hidden="true" />
       <h3 className="mt-3 font-display text-base font-semibold text-ink-900">{title}</h3>
       <p className="mt-1 text-sm text-ink-500">{description}</p>
+      {ctaLabel && ctaHref ? (
+        <Link href={ctaHref} className="mt-3 inline-block text-sm font-medium text-beacon-600 hover:underline">
+          {ctaLabel}
+        </Link>
+      ) : null}
     </Card>
   );
 }

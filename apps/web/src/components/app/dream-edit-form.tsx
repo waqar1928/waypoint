@@ -8,7 +8,7 @@ import { isProblemDetails } from "@/lib/api-types";
 import type { Dream } from "@/lib/dream";
 import type { DreamStatementInput } from "@/lib/validation";
 
-export function DreamEditForm({ dream }: { dream: Dream }) {
+export function DreamEditForm({ dream, onSaved }: { dream: Dream; onSaved?: () => void }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -25,6 +25,7 @@ export function DreamEditForm({ dream }: { dream: Dream }) {
     if (response.ok) {
       setSaved(true);
       router.refresh();
+      onSaved?.();
       return;
     }
 

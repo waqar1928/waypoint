@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { clsx } from "clsx";
 import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ActionStatus, WaypointAction } from "@/lib/actions";
 
@@ -23,12 +25,20 @@ export function ActionRow({
   action,
   onStatusChange,
   onSetNextBest,
+  isReflecting,
+  onAddReflection,
+  onDismissReflection,
 }: {
   action: WaypointAction;
   onStatusChange: (status: ActionStatus) => void;
   onSetNextBest: () => void;
+  isReflecting: boolean;
+  onAddReflection: (whatHappened: string, learning: string) => void;
+  onDismissReflection: () => void;
 }) {
   const isDone = action.status === "completed" || action.status === "cancelled";
+  const [whatHappened, setWhatHappened] = useState("");
+  const [learning, setLearning] = useState("");
 
   return (
     <Card className={clsx(action.isNextBestAction && "border-beacon-500 bg-beacon-100/30")}>
@@ -46,6 +56,9 @@ export function ActionRow({
             </h3>
           </div>
           {action.description ? <p className="mt-1 text-sm text-ink-700">{action.description}</p> : null}
+          {action.isNextBestAction && action.rationale ? (
+            <p className="mt-1 text-xs text-beacon-600">{action.rationale}</p>
+          ) : null}
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className={clsx("rounded-full px-2 py-0.5 font-medium", impactStyles[action.expectedImpact])}>
@@ -88,6 +101,48 @@ export function ActionRow({
           ) : null}
         </div>
       </div>
+
+      {isReflecting ? (
+        <div className="mt-4 space-y-3 border-t border-ink-300 pt-4">
+          <div>
+            <label className="text-xs font-medium text-ink-700" htmlFor={`what-happened-${action.id}`}>
+              What happened? (optional)
+            </label>
+            <textarea
+              id={`what-happened-${action.id}`}
+              rows={2}
+              value={whatHappened}
+              onChange={(e) => setWhatHappened(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border border-ink-300 bg-paper-raised px-3 py-2 text-sm text-ink-900"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-ink-700" htmlFor={`learned-${action.id}`}>
+              What did you learn? (optional)
+            </label>
+            <textarea
+              id={`learned-${action.id}`}
+              rows={2}
+              value={learning}
+              onChange={(e) => setLearning(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border border-ink-300 bg-paper-raised px-3 py-2 text-sm text-ink-900"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              className="px-3 py-1.5 text-xs"
+              onClick={() => onAddReflection(whatHappened.trim(), learning.trim())}
+              disabled={!whatHappened.trim() && !learning.trim()}
+            >
+              Save
+            </Button>
+            <button type="button" onClick={onDismissReflection} className="text-xs font-medium text-ink-500 hover:text-ink-900">
+              Skip
+            </button>
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
 }

@@ -20,6 +20,7 @@ public static class DependencyInjection
                 .AddInterceptors(new AuditableEntitySaveChangesInterceptor()));
 
         services.AddScoped<IJournalRepository, JournalRepository>();
+        services.AddScoped<IJournalSummaryProvider, JournalSummaryProvider>();
         services.AddScoped<IStartupMigrator, JournalStartupMigrator>();
 
         return services;

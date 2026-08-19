@@ -48,6 +48,6 @@ public sealed class SetNextBestActionCommandHandler(
         action.UpdatedBy = userId;
         await repository.SaveAsync(action, cancellationToken);
 
-        return ActionDto.From(action);
+        return ActionDto.From(action, "You marked this as your next move.");
     }
 }
