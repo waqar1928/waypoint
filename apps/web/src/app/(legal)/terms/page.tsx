@@ -15,11 +15,7 @@ export default function TermsOfServicePage() {
       <p className="mt-6 text-sm text-ink-700">
         These terms describe the actual rules and behavior of this product as built. They are a
         starting point, not a substitute for review by a qualified lawyer before this product
-        serves real users at scale. In particular,{" "}
-        <strong>the governing-law and jurisdiction section below needs to be filled in</strong>{" "}
-        by whoever operates this product for real. It&apos;s deliberately left as a placeholder
-        rather than an invented jurisdiction, since that&apos;s a real legal decision, not a
-        technical one.
+        serves real users at scale.
       </p>
 
       <h2 className="mt-8 font-display text-xl font-semibold text-ink-900">1. What Drevia is</h2>
@@ -97,12 +93,10 @@ export default function TermsOfServicePage() {
       </p>
 
       <h2 className="mt-8 font-display text-xl font-semibold text-ink-900">9. Governing law</h2>
-      <p className="mt-3 rounded-[10px] border border-dashed border-ink-300 bg-paper-raised p-4 text-sm text-ink-700">
-        <strong>[Placeholder, fill in before real launch]</strong> These terms are governed by
-        the laws of [jurisdiction], without regard to conflict-of-law principles. Any dispute will
-        be resolved in the courts of [jurisdiction]. This section requires an actual decision by
-        whoever operates this product about where it&apos;s legally based. It&apos;s
-        intentionally not filled in with an invented answer.
+      <p className="mt-3 text-sm text-ink-700">
+        Drevia is operated by Zawa Enterprises Ltd. These terms are governed by the laws of
+        England and Wales, without regard to conflict-of-law principles. Any dispute will be
+        resolved in the courts of England and Wales.
       </p>
 
       <h2 className="mt-8 font-display text-xl font-semibold text-ink-900">10. Changes to these terms</h2>

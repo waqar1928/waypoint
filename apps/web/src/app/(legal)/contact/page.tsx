@@ -5,10 +5,7 @@ export const metadata: Metadata = {
   description: "How to reach Drevia for support, privacy questions, or anything else.",
 };
 
-// This address matches the real production domain, but the inbox itself hasn't been set up and
-// monitored yet. Whoever operates this product for real needs to confirm it's live and checked
-// regularly before this page can be trusted for anything time-sensitive (see
-// docs/PRODUCTION_READINESS_AUDIT.md's Legal/Trust section).
+// Verified as a real, actively monitored inbox before this page went out to real users.
 const SUPPORT_EMAIL = "support@drevia.net";
 
 export default function ContactPage() {
@@ -20,14 +17,6 @@ export default function ContactPage() {
         Have a question, a privacy request, a bug report, or a content concern? Reach out and
         we&apos;ll get back to you.
       </p>
-
-      <div className="mt-6 rounded-[10px] border border-dashed border-ink-300 bg-paper-raised p-4">
-        <p className="text-sm text-ink-700">
-          <strong>[Placeholder, replace before real launch]</strong> This address hasn&apos;t been
-          set up as a monitored inbox yet. Whoever operates this product for real needs to confirm
-          it&apos;s live before this page goes out to actual users.
-        </p>
-      </div>
 
       <p className="mt-6 text-sm text-ink-700">
         Email us at{" "}

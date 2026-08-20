@@ -83,6 +83,7 @@ export default function RegisterPage() {
     <Card>
       <h1 className="font-display text-2xl font-semibold text-ink-900">Find your dream</h1>
       <p className="mt-1 text-sm text-ink-700">Create your Drevia account to get started.</p>
+      <p className="mt-1 text-xs text-ink-500">Drevia is now open for early access.</p>
 
       {/* method="post" is a defense-in-depth backstop, not the primary submission path (onSubmit
           calls handleSubmit and fetches the API directly) — if React hydration ever fails for any

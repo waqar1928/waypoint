@@ -16,7 +16,7 @@ const arcStages = [
   { name: "Discover", description: "Conversational prompts surface your interests, strengths, and possible directions." },
   { name: "Define", description: "Turn a direction into a clear Dream Statement: purpose, audience, and problem." },
   { name: "Validate", description: "Name your obstacles and test assumptions cheaply before you commit." },
-  { name: "Plan", description: "Cascade the dream into a 90-day mission, a 30-day goal, and a next action." },
+  { name: "Plan", description: "Cascade the dream from a 5-Year Vision through a 3-Year Direction and a 1-Year Goal, down to a 90-Day Mission." },
   { name: "Act", description: "A dream-native task system that always shows your Next Best Action." },
 ];
 
@@ -55,9 +55,14 @@ const features = [
 
 const faqs = [
   {
+    question: "What does Early Access mean?",
+    answer:
+      "Drevia is real and ready to use today. We're opening it to early users first, and using what we learn from them to keep improving it before a wider launch.",
+  },
+  {
     question: "Is Drevia affiliated with any book or author?",
     answer:
-      "No. Drevia is an original product with its own terminology, questions, and exercises. It is not affiliated with, endorsed by, or associated with any author, book, or personal brand.",
+      "No. Drevia was inspired by Simon Squibb's \"What's Your Dream?\" challenge, but it's an original product with its own terminology, questions, and exercises. It is not affiliated with, endorsed by, or associated with any author, book, or personal brand.",
   },
   {
     question: "Does the AI just tell me what to do?",
@@ -71,7 +76,7 @@ const faqs = [
   },
   {
     question: "What does it cost?",
-    answer: "Pricing will be announced before general availability.",
+    answer: "Drevia is currently in Early Access. Pricing will be announced before general availability.",
   },
 ];
 
@@ -91,6 +96,9 @@ export default function LandingPage() {
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-lg text-ink-700">
               Turn the thing you&rsquo;ve been thinking about into something you can actually do.
+            </p>
+            <p className="mt-4 text-sm font-medium text-beacon-600">
+              Drevia is now open for early access.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/register" className={buttonClasses("primary", "px-8 text-base")}>
@@ -155,12 +163,14 @@ export default function LandingPage() {
         </section>
 
         <section className="border-y border-ink-300 bg-chart-900 py-20 text-paper">
-          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-10">
-            <p className="font-display text-2xl italic leading-relaxed sm:text-3xl">
-              &ldquo;Testimonials from early users will go here once Drevia is in
-              private beta.&rdquo;
+          <div className="mx-auto max-w-2xl px-4 text-center sm:px-6 lg:px-10">
+            <p className="font-display text-2xl font-semibold leading-relaxed sm:text-3xl">
+              Drevia is real, and it&rsquo;s ready to use today.
             </p>
-            <p className="mt-4 text-sm text-ink-300">Placeholder, not a real testimonial</p>
+            <p className="mt-4 text-base text-ink-300">
+              We&rsquo;re opening it to early users first, and using what we learn from them to
+              make it better before a wider launch.
+            </p>
           </div>
         </section>
 

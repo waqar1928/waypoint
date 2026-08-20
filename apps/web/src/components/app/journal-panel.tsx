@@ -9,7 +9,7 @@ import type { JournalEntry, JournalEntryType } from "@/lib/journal";
 const entryTypeLabels: Record<JournalEntryType, string> = {
   daily: "Daily reflection",
   weekly: "Weekly reflection",
-  lesson: "Lesson",
+  lesson: "Learning",
   win: "Win",
   failure: "Failure",
   idea: "Idea",

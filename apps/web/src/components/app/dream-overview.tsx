@@ -96,7 +96,7 @@ export function DreamOverview({
 
           <Card>
             <ListChecks className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-            <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Current focus</h2>
+            <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Current Mission</h2>
             {currentMission ? (
               <>
                 <p className="mt-1 text-sm text-ink-700">{currentMission.title}</p>
@@ -162,7 +162,7 @@ export function DreamOverview({
 
           <Card>
             <BookOpen className="h-5 w-5 text-beacon-500" aria-hidden="true" />
-            <h2 className="mt-3 font-display text-base font-semibold text-ink-900">What you&apos;ve learned</h2>
+            <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Learnings</h2>
             {recentLearnings.length > 0 ? (
               <ul className="mt-3 space-y-3">
                 {recentLearnings.map((entry) => (

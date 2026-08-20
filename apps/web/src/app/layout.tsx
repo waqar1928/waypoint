@@ -21,17 +21,24 @@ const jetbrainsMono = JetBrains_Mono({
 
 const title = "Drevia | Turn your dream into your next move";
 const description =
-  "Drevia helps you turn ideas into clear goals, practical experiments, and next steps. Discover what you want, define why it matters, and always know what to do next.";
+  "Drevia is now open for early access. Turn ideas into clear goals, practical experiments, and next steps. Discover what you want, define why it matters, and always know what to do next.";
 
 export const metadata: Metadata = {
   // Required for Open Graph/Twitter's relative-URL resolution and for sitemap.ts/robots.ts's
-  // absolute URLs. No public asset for an og:image exists yet, so this intentionally doesn't
-  // reference one — a broken image link would be worse than no image.
+  // absolute URLs.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3030"),
   title,
   description,
-  openGraph: { title, description, type: "website", siteName: "Drevia" },
-  twitter: { card: "summary", title, description },
+  // 1200x630 is the standard OG/Twitter card size — generated from the same compass mark used
+  // for the favicon (see public/favicon.svg), not a screenshot or fabricated content.
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    siteName: "Drevia",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Drevia" }],
+  },
+  twitter: { card: "summary_large_image", title, description, images: ["/og-image.png"] },
   // The Drevia mark (the compass symbol alone, no wordmark) rendered at every size browsers and
   // OSes actually request — see public/favicon.svg for the single source of truth all of these
   // are generated from. favicon.svg comes first so browsers that support vector favicons
