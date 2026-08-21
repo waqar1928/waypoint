@@ -71,8 +71,8 @@ From here on, connect as `ssh deploy@<VPS_IP>`.
 sudo apt-get update && sudo apt-get install -y git
 ssh-keygen -t ed25519 -C "deploy@drevia-vps"   # then add the printed public key as a GitHub
                                                  # deploy key (read-only) on this repository
-git clone git@github.com:<your-org>/waypoint.git /opt/drevia
-cd /opt/drevia
+git clone git@github.com:<your-org>/waypoint.git /opt/apps/drevia
+cd /opt/apps/drevia
 ```
 
 Using a GitHub **deploy key** (repo-scoped, read-only) rather than a personal access token or your
@@ -92,7 +92,7 @@ Fill in every value marked `CHANGE_ME` — see the next step for how to generate
 
 Every secret this app needs is described in [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md).
 None of them are pasted into chat, committed to git, or baked into a Docker image — they live only
-in `/opt/drevia/.env` on the VPS (mode `600`, owned by `deploy`), which
+in `/opt/apps/drevia/.env` on the VPS (mode `600`, owned by `deploy`), which
 `docker-compose.prod.yml` reads at container-start time.
 
 | Secret | How to get it |
@@ -273,14 +273,14 @@ This instantiates [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md)'s "fallback appro
 `pg_dump`" section (the recommended path there, managed-provider point-in-time recovery, doesn't
 apply here since this is self-hosted Postgres in a container) for this specific VPS.
 
-**Backup script** (`/opt/drevia/backup.sh`):
+**Backup script** (`/opt/apps/drevia/backup.sh`):
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-cd /opt/drevia
+cd /opt/apps/drevia
 source .env
-BACKUP_DIR=/opt/drevia-backups
+BACKUP_DIR=/opt/apps/drevia-backups
 mkdir -p "$BACKUP_DIR"
 TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
 docker compose -f docker-compose.prod.yml exec -T postgres \
@@ -291,8 +291,8 @@ find "$BACKUP_DIR" -name "drevia-*.dump" -mtime +7 -delete
 ```
 
 ```bash
-chmod +x /opt/drevia/backup.sh
-chmod 700 /opt/drevia-backups
+chmod +x /opt/apps/drevia/backup.sh
+chmod 700 /opt/apps/drevia-backups
 ```
 
 **Frequency:** nightly, via cron:
@@ -300,10 +300,10 @@ chmod 700 /opt/drevia-backups
 ```bash
 crontab -e
 # Add:
-0 3 * * * /opt/drevia/backup.sh >> /opt/drevia-backups/backup.log 2>&1
+0 3 * * * /opt/apps/drevia/backup.sh >> /opt/apps/drevia-backups/backup.log 2>&1
 ```
 
-**Location:** `/opt/drevia-backups` on the VPS by default. Per
+**Location:** `/opt/apps/drevia-backups` on the VPS by default. Per
 [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md), a backup on the same disk as the database it backs
 up protects against a bad `DELETE`/`DROP` but not against VPS-level disk failure — copy dumps to
 off-VPS object storage (Hostinger Object Storage, S3-compatible, or similar) on a schedule as a
@@ -347,7 +347,7 @@ guide's scope, same reasoning as DISASTER_RECOVERY.md's stance on managed Postgr
 ## 21. Update/redeploy procedure
 
 ```bash
-cd /opt/drevia
+cd /opt/apps/drevia
 git pull origin main
 docker compose -f docker-compose.prod.yml up -d --build
 ```
@@ -359,7 +359,7 @@ backup first (Step 19's script) if the deploy includes a migration, per Step 10.
 ## 22. Rollback procedure
 
 ```bash
-cd /opt/drevia
+cd /opt/apps/drevia
 git log --oneline -5                 # find the last known-good commit
 git checkout <previous-good-commit>
 docker compose -f docker-compose.prod.yml up -d --build

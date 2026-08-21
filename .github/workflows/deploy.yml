@@ -27,7 +27,7 @@ jobs:
 
       # This workflow deliberately does not check out the repo, build anything, or handle any
       # application secret (DB password, ANTHROPIC_API_KEY, SMTP credentials). Those live only in
-      # /opt/drevia/.env on the VPS itself (see docs/HOSTINGER_DEPLOYMENT.md) and are never read,
+      # /opt/apps/drevia/.env on the VPS itself (see docs/HOSTINGER_DEPLOYMENT.md) and are never read,
       # transmitted, or logged by this workflow. The only thing this job needs from GitHub
       # Secrets is SSH access to run the same two commands documented in
       # docs/HOSTINGER_DEPLOYMENT.md's "Update/redeploy procedure" step.
@@ -40,7 +40,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
           script: |
             set -euo pipefail
-            cd /opt/drevia
+            cd /opt/apps/drevia
             git fetch origin main
             git checkout main
             git reset --hard origin/main
