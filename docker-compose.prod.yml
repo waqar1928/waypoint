@@ -47,6 +47,13 @@ services:
       Waypoint__WebAppBaseUrl: ${WEB_APP_BASE_URL:?Set WEB_APP_BASE_URL in .env, e.g. https://app.drevia.net}
       Waypoint__AutoMigrate: "true"
       Waypoint__DataProtection__KeysDirectory: /keys
+      # Required outside Development - Program.cs throws at startup if these three aren't all set
+      # together (see the fail-fast check mirroring DataProtection:KeysDirectory above). Generate
+      # the keypair once, outside this repo, before the first deploy that includes push
+      # notifications; see docs/HOSTINGER_DEPLOYMENT.md Step 7 and docs/ENVIRONMENT_VARIABLES.md.
+      Waypoint__Notifications__Push__VapidPublicKey: ${VAPID_PUBLIC_KEY:?Set VAPID_PUBLIC_KEY in .env - see docs/HOSTINGER_DEPLOYMENT.md}
+      Waypoint__Notifications__Push__VapidPrivateKey: ${VAPID_PRIVATE_KEY:?Set VAPID_PRIVATE_KEY in .env - see docs/HOSTINGER_DEPLOYMENT.md}
+      Waypoint__Notifications__Push__VapidSubject: ${VAPID_SUBJECT:?Set VAPID_SUBJECT in .env, e.g. mailto:you@drevia.net}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       Email__Smtp__Host: ${SMTP_HOST:-}
       Email__Smtp__Port: ${SMTP_PORT:-587}

@@ -45,6 +45,48 @@ VPS itself.
 In `docker-compose.prod.yml` these are set from `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENABLE_SSL`,
 `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_FROM_NAME` in your `.env` file.
 
+## Push Notifications (VAPID)
+
+**Required as a group outside Development.** `Program.cs` fails fast at startup (throws
+`InvalidOperationException`, the API does not start) if these three aren't all set together —
+the exact same fail-fast shape already used for `Waypoint__DataProtection__KeysDirectory`. In
+Development, running without any of them set is allowed: `ScheduledNotificationWorker` simply
+logs a warning and never attempts a send, so local contributors aren't forced to generate a real
+keypair just to run the app.
+
+| Variable | Required | Purpose | Example | Used in |
+|---|---|---|---|---|
+| `Waypoint__Notifications__Push__VapidPublicKey` | Yes outside Development | VAPID public key, embedded in the browser's `pushManager.subscribe()` call. Not a secret — also returned as-is by `GET /api/v1/notifications/push-public-key`. | a base64url-encoded EC public key | `VapidOptions.cs`, `WebPushSender.cs`, `NotificationsEndpoints.cs` |
+| `Waypoint__Notifications__Push__VapidPrivateKey` | Yes outside Development | VAPID private key used to sign the JWT sent with every push. **A real secret** — never logged, never returned by any endpoint, never sent to the browser. | a base64url-encoded EC private key | `VapidOptions.cs`, `WebPushSender.cs` |
+| `Waypoint__Notifications__Push__VapidSubject` | Yes outside Development | Contact address push services may use to reach you about delivery problems, per the Web Push spec. Not a secret. **Not validated for format by the application** — a placeholder string is technically accepted, but is not a legitimate production value. | `mailto:you@drevia.net` or `https://drevia.net/contact` | `VapidOptions.cs`, `WebPushSender.cs` |
+| `Waypoint__Notifications__Push__MaxPerUserPerDay` | No | Hard cap on push notifications sent to one user per local calendar day, regardless of how many reminder types exist. | `3` (code default) | `ScheduledNotificationWorker.cs`, `DailyRateLimit.cs` |
+| `Waypoint__Notifications__Push__PollingIntervalSeconds` | No | How often the background worker checks for due reminders. | `120` (code default) | `ScheduledNotificationWorker.cs` |
+| `Waypoint__Notifications__Push__DailyReminderLocalTime` | No | Local time-of-day (in each user's own timezone) the daily "next move" reminder becomes eligible to send. Falls back safely to the default if unparsable. | `09:00` (code default) | `ScheduledNotificationWorker.cs` |
+
+In `docker-compose.prod.yml` the three required variables are set from `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` in your `.env` file. The three optional tuning variables are
+not templated in `docker-compose.prod.yml` by default (safe code defaults apply) — add them
+directly to the `api` service's `environment:` block if you want to override one.
+
+**Generating a keypair:** run `npx web-push generate-vapid-keys` (or an equivalent VAPID keypair
+generator) **outside this repository and outside any chat session** — see
+[HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md) Step 7 for the full procedure. Hard rules:
+
+- The private key must never be committed to git, never pasted into `appsettings*.json`, and
+  never written anywhere inside this repository.
+- Production VAPID keys must be generated fresh for production — never reuse a keypair generated
+  for local development or testing.
+- The public and private key must belong to the same generated keypair. **The application does
+  not verify this at startup** — a mismatched pair still starts successfully, and every push send
+  fails at delivery time with a signature error, visible only in delivery logs and
+  `notifications_delivery_history`, not as a startup failure. Double-check you copied both halves
+  of the same `generate-vapid-keys` output.
+- The subject must be a real, monitored `mailto:` address or `https://` URL — not a placeholder,
+  even though the application does not enforce this format.
+- Store the private key using the VPS's own environment/secrets mechanism (its `.env` file, mode
+  `600`) — the same mechanism already used for `POSTGRES_PASSWORD`/`ANTHROPIC_API_KEY`/`SMTP_PASSWORD`,
+  not a new one.
+
 ## Application / URLs / CORS
 
 | Variable | Required | Purpose | Example | Used in |

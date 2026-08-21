@@ -100,11 +100,21 @@ in `/opt/drevia/.env` on the VPS (mode `600`, owned by `deploy`), which
 | `POSTGRES_PASSWORD` | Generate on the VPS: `openssl rand -base64 32`. Never reuse the local dev password. |
 | `ANTHROPIC_API_KEY` | From your Anthropic Console account (console.anthropic.com) → API Keys. Optional — leave blank to launch with Drevia Coach disabled. |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | From whichever SMTP relay or transactional-email provider you choose. Optional — leave blank to launch with emails logged instead of sent. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | **Required** — the API will not start without both. Generate a fresh keypair, once, outside this repo and outside any chat session: `npx web-push generate-vapid-keys` (Node/npm is already required on this VPS to build the `web` container, so this needs no new toolchain). Copy both the public and private key from the SAME command's output — see [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)'s Push Notifications section for why a mismatched pair fails silently at delivery time rather than at startup. Never reuse a keypair generated for local development. |
+| `VAPID_SUBJECT` | **Required.** A real, monitored `mailto:` address (e.g. `mailto:you@drevia.net`) or `https://` URL for push services to contact you about delivery problems. Not generated — you choose this value; a placeholder is not acceptable even though the app doesn't reject one. |
 
 `POSTGRES_DB` and `POSTGRES_USER` aren't secrets in the same sense, but pick real values (not the
 dev defaults) rather than leaving them as `CHANGE_ME`. `WEB_APP_BASE_URL` should be
 `https://app.drevia.net` once DNS is live (Step 11); you can deploy with the plain IP or a
 `localhost`-style placeholder first and update it once DNS resolves, then redeploy.
+
+Unlike `ANTHROPIC_API_KEY`/SMTP, the VAPID variables are **not optional** — the container will not
+start without them once `docker-compose.prod.yml`'s `api.environment:` block requires all three
+(see Step 8's `config` check below, which will fail loudly with a clear "Set VAPID_PUBLIC_KEY in
+.env" message if any is missing). If you genuinely want to launch without push notifications for
+now, do not run `npx web-push generate-vapid-keys` casually — see whether disabling the
+Notifications module's push wiring entirely is a better fit than shipping a made-up keypair; this
+guide assumes push notifications are wanted, since they're a shipped feature as of this release.
 
 ## 8. Configure Docker Compose
 
