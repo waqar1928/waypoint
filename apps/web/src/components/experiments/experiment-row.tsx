@@ -73,7 +73,12 @@ export function ExperimentRow({
         <ul className="mt-4 space-y-3 border-t border-ink-300 pt-4">
           {experiment.results.map((result) => (
             <li key={result.id}>
-              <span className={clsx("rounded-full px-2 py-0.5 text-xs font-medium", outcomeStyles[result.outcome])}>
+              <span
+                className={clsx(
+                  "inline-block animate-[drevia-settle_260ms_ease-out] rounded-full px-2 py-0.5 text-xs font-medium",
+                  outcomeStyles[result.outcome],
+                )}
+              >
                 {outcomeLabels[result.outcome]}
               </span>
               <p className="mt-1.5 text-sm text-ink-900">

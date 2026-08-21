@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { clsx } from "clsx";
-import { Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { ActionReflectionPrompt } from "@/components/actions/action-reflection-prompt";
 import type { ActionStatus, WaypointAction } from "@/lib/actions";
 
 const statusLabels: Record<ActionStatus, string> = {
@@ -23,6 +22,8 @@ const impactStyles: Record<string, string> = {
 
 export function ActionRow({
   action,
+  isNextBest,
+  nextBestRationale,
   onStatusChange,
   onSetNextBest,
   isReflecting,
@@ -30,6 +31,14 @@ export function ActionRow({
   onDismissReflection,
 }: {
   action: WaypointAction;
+  /** Whether this row is THE computed next best action right now - a manual pin if one exists,
+   * otherwise NextBestActionSelector's pick (the same single source of truth Dashboard and Dream
+   * Overview read). Deliberately not action.isNextBestAction: that field only reflects a manual
+   * pin, so it used to miss the computed-fallback case entirely. */
+  isNextBest: boolean;
+  /** The computed rationale for this row, already resolved by the caller via
+   * nextMoveRationaleText() - null unless isNextBest is true. */
+  nextBestRationale: string | null;
   onStatusChange: (status: ActionStatus) => void;
   onSetNextBest: () => void;
   isReflecting: boolean;
@@ -37,27 +46,38 @@ export function ActionRow({
   onDismissReflection: () => void;
 }) {
   const isDone = action.status === "completed" || action.status === "cancelled";
-  const [whatHappened, setWhatHappened] = useState("");
-  const [learning, setLearning] = useState("");
 
   return (
-    <Card className={clsx(action.isNextBestAction && "border-beacon-500 bg-beacon-100/30")}>
+    <Card className={clsx("transition-colors duration-300 ease-out", isNextBest && "border-beacon-500 bg-beacon-100/30")}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            {action.isNextBestAction ? (
+            {isNextBest ? (
               <span className="flex items-center gap-1 rounded-full bg-beacon-500 px-2.5 py-0.5 text-xs font-semibold text-white">
                 <Star className="h-3 w-3" aria-hidden="true" />
                 Next best
               </span>
             ) : null}
-            <h3 className={clsx("font-display text-base font-semibold text-ink-900", isDone && "line-through text-ink-500")}>
+            {action.status === "completed" ? (
+              // A brief, quiet acknowledgement that this just got done - not a celebration, just
+              // a settle-in. See the drevia-settle keyframe in globals.css.
+              <CheckCircle2
+                className="h-4 w-4 shrink-0 animate-[drevia-settle_260ms_ease-out] text-sage-600"
+                aria-hidden="true"
+              />
+            ) : null}
+            <h3
+              className={clsx(
+                "font-display text-base font-semibold text-ink-900 transition-colors duration-300 ease-out",
+                isDone && "line-through text-ink-500",
+              )}
+            >
               {action.title}
             </h3>
           </div>
           {action.description ? <p className="mt-1 text-sm text-ink-700">{action.description}</p> : null}
-          {action.isNextBestAction && action.rationale ? (
-            <p className="mt-1 text-xs text-beacon-600">{action.rationale}</p>
+          {isNextBest && nextBestRationale ? (
+            <p className="mt-1 text-xs text-beacon-600">{nextBestRationale}</p>
           ) : null}
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -90,7 +110,7 @@ export function ActionRow({
               </option>
             ))}
           </select>
-          {!action.isNextBestAction && !isDone ? (
+          {!isNextBest && !isDone ? (
             <button
               type="button"
               onClick={onSetNextBest}
@@ -103,45 +123,7 @@ export function ActionRow({
       </div>
 
       {isReflecting ? (
-        <div className="mt-4 space-y-3 border-t border-ink-300 pt-4">
-          <div>
-            <label className="text-xs font-medium text-ink-700" htmlFor={`what-happened-${action.id}`}>
-              What happened? (optional)
-            </label>
-            <textarea
-              id={`what-happened-${action.id}`}
-              rows={2}
-              value={whatHappened}
-              onChange={(e) => setWhatHappened(e.target.value)}
-              className="mt-1 w-full rounded-[10px] border border-ink-300 bg-paper-raised px-3 py-2 text-sm text-ink-900"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-ink-700" htmlFor={`learned-${action.id}`}>
-              What did you learn? (optional)
-            </label>
-            <textarea
-              id={`learned-${action.id}`}
-              rows={2}
-              value={learning}
-              onChange={(e) => setLearning(e.target.value)}
-              className="mt-1 w-full rounded-[10px] border border-ink-300 bg-paper-raised px-3 py-2 text-sm text-ink-900"
-            />
-          </div>
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              className="px-3 py-1.5 text-xs"
-              onClick={() => onAddReflection(whatHappened.trim(), learning.trim())}
-              disabled={!whatHappened.trim() && !learning.trim()}
-            >
-              Save
-            </Button>
-            <button type="button" onClick={onDismissReflection} className="text-xs font-medium text-ink-500 hover:text-ink-900">
-              Skip
-            </button>
-          </div>
-        </div>
+        <ActionReflectionPrompt actionId={action.id} onSave={onAddReflection} onSkip={onDismissReflection} />
       ) : null}
     </Card>
   );

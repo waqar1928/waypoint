@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Compass, ListChecks, FlaskConical, BookOpen, ArrowRight, Pencil } from "lucide-react";
+import { Compass, ListChecks, FlaskConical, BookOpen, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { DreamEditForm } from "@/components/app/dream-edit-form";
+import { DreamJourneyRail } from "@/components/app/dream-journey-rail";
+import { NextMoveCard } from "@/components/app/next-move-card";
 import type { Dream, DreamStage } from "@/lib/dream";
-import type { Mission } from "@/lib/plan";
+import type { Goal, Mission } from "@/lib/plan";
 import type { WaypointAction } from "@/lib/actions";
+import { buildDreamJourneyNodes } from "@/lib/journey";
 import type { Experiment } from "@/lib/experiments";
 import type { JournalEntry } from "@/lib/journal";
 
@@ -28,14 +31,33 @@ export function DreamOverview({
   nextBestAction,
   activeExperiment,
   recentLearnings,
+  learningsCount,
+  fiveYearVision,
+  threeYearDirection,
+  oneYearGoal,
 }: {
   dream: Dream;
   currentMission: Mission | null;
   nextBestAction: WaypointAction | null;
   activeExperiment: Experiment | null;
   recentLearnings: JournalEntry[];
+  learningsCount: number;
+  fiveYearVision: Goal | null;
+  threeYearDirection: Goal | null;
+  oneYearGoal: Goal | null;
 }) {
   const [isEditing, setIsEditing] = useState(false);
+
+  const journeyNodes = buildDreamJourneyNodes({
+    dreamTitle: dream.title,
+    fiveYearVision: fiveYearVision?.statement ?? null,
+    threeYearDirection: threeYearDirection?.statement ?? null,
+    oneYearGoal: oneYearGoal?.statement ?? null,
+    ninetyDayMission: currentMission?.title ?? null,
+    nextMoveTitle: nextBestAction?.title ?? null,
+    activeExperimentSummary: activeExperiment?.ideaDescription ?? null,
+    learningsCount,
+  });
 
   return (
     <>
@@ -66,6 +88,8 @@ export function DreamOverview({
         </div>
       ) : (
         <div className="mt-8 space-y-6">
+          <DreamJourneyRail nodes={journeyNodes} />
+
           <Card>
             <p className="text-ink-900">{dream.statement}</p>
             {dream.purpose ? (
@@ -94,7 +118,7 @@ export function DreamOverview({
             ) : null}
           </Card>
 
-          <Card>
+          <Card id="current-mission">
             <ListChecks className="h-5 w-5 text-beacon-500" aria-hidden="true" />
             <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Current Mission</h2>
             {currentMission ? (
@@ -114,32 +138,9 @@ export function DreamOverview({
             )}
           </Card>
 
-          <Card className="border-beacon-500/40 bg-beacon-100/40">
-            <p className="text-xs font-semibold uppercase tracking-wide text-beacon-600">Next move</p>
-            {nextBestAction ? (
-              <>
-                <h2 className="mt-2 font-display text-lg font-semibold text-ink-900">{nextBestAction.title}</h2>
-                {nextBestAction.rationale ? (
-                  <p className="mt-1 text-sm text-beacon-700">{nextBestAction.rationale}</p>
-                ) : null}
-                <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
-                  Go to Actions
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </>
-            ) : (
-              <>
-                <h2 className="mt-2 font-display text-lg font-semibold text-ink-900">Add your first action</h2>
-                <p className="mt-1 text-sm text-ink-700">A small, concrete next step you can start on.</p>
-                <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
-                  Go to Actions
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </>
-            )}
-          </Card>
+          <NextMoveCard initialAction={nextBestAction} />
 
-          <Card>
+          <Card id="active-experiment">
             <FlaskConical className="h-5 w-5 text-beacon-500" aria-hidden="true" />
             <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Active experiment</h2>
             {activeExperiment ? (
@@ -160,7 +161,7 @@ export function DreamOverview({
             )}
           </Card>
 
-          <Card>
+          <Card id="learnings">
             <BookOpen className="h-5 w-5 text-beacon-500" aria-hidden="true" />
             <h2 className="mt-3 font-display text-base font-semibold text-ink-900">Learnings</h2>
             {recentLearnings.length > 0 ? (

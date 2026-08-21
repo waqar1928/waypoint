@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
@@ -74,7 +74,24 @@ export function MilestonesPanel({ initialMilestones }: { initialMilestones: Mile
         <ul className="mt-4 space-y-2 border-t border-ink-300 pt-4">
           {milestones.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className={m.achievedAt ? "text-ink-500 line-through" : "text-ink-900"}>{m.title}</span>
+              <span className="flex items-center gap-1.5">
+                {m.achievedAt ? (
+                  // Milestones are meant to be rare and meaningful - this is the one place a
+                  // slightly more present acknowledgement (icon + color, not motion-heavy) fits;
+                  // still just a quiet settle-in, not a celebration.
+                  <CheckCircle2
+                    className="h-3.5 w-3.5 shrink-0 animate-[drevia-settle_260ms_ease-out] text-sage-600"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span
+                  className={`transition-colors duration-300 ease-out ${
+                    m.achievedAt ? "text-ink-500 line-through" : "text-ink-900"
+                  }`}
+                >
+                  {m.title}
+                </span>
+              </span>
               {!m.achievedAt ? (
                 <button
                   type="button"

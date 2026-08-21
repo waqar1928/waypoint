@@ -22,6 +22,11 @@ export default async function DreamPage() {
   const currentMission = plan?.missions[0] ?? null;
   const activeExperiment =
     experiments.find((e) => e.status === "running") ?? experiments.find((e) => e.status === "planned") ?? null;
+  // The Plan already contains all three Goal horizons - the Journey Rail composes them, it
+  // doesn't fetch anything new.
+  const fiveYearVision = plan?.goals.find((g) => g.horizon === "fiveYear") ?? null;
+  const threeYearDirection = plan?.goals.find((g) => g.horizon === "threeYear") ?? null;
+  const oneYearGoal = plan?.goals.find((g) => g.horizon === "oneYear") ?? null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
@@ -31,6 +36,10 @@ export default async function DreamPage() {
         nextBestAction={nextBestAction}
         activeExperiment={activeExperiment}
         recentLearnings={learnings.slice(0, 3)}
+        learningsCount={learnings.length}
+        fiveYearVision={fiveYearVision}
+        threeYearDirection={threeYearDirection}
+        oneYearGoal={oneYearGoal}
       />
     </div>
   );

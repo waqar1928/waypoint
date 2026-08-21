@@ -5,10 +5,19 @@ import { Button } from "@/components/ui/button";
 import { ActionCreateForm } from "@/components/actions/action-create-form";
 import { ActionRow } from "@/components/actions/action-row";
 import { apiMutate } from "@/lib/api-client";
+import { nextMoveRationaleText } from "@/lib/next-move";
 import type { CreateActionInput } from "@/lib/validation";
 import type { ActionStatus, WaypointAction } from "@/lib/actions";
 
-export function ActionsBoard({ initialActions }: { initialActions: WaypointAction[] }) {
+export function ActionsBoard({
+  initialActions,
+  initialNextBestActionId,
+  initialNextBestRationale,
+}: {
+  initialActions: WaypointAction[];
+  initialNextBestActionId: string | null;
+  initialNextBestRationale: string | null;
+}) {
   const [actions, setActions] = useState(initialActions);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +25,28 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
   // not for any other status change) - this is what triggers the optional "what happened / what
   // did you learn" prompt in ActionRow. Cleared by either submitting or skipping that prompt.
   const [reflectingActionId, setReflectingActionId] = useState<string | null>(null);
+  // The COMPUTED next best action - the same thing GET /api/actions/next-best returns to
+  // Dashboard and Dream Overview (a manual pin if one exists, otherwise NextBestActionSelector's
+  // pick). This drives the "Next best" badge/rationale below, not each action's own
+  // isNextBestAction field - that field only reflects a manual pin, so a computed-but-unpinned
+  // recommendation used to show no indicator at all in this list before this existed.
+  const [nextBestActionId, setNextBestActionId] = useState(initialNextBestActionId);
+  const [nextBestRationale, setNextBestRationale] = useState(initialNextBestRationale);
+
+  // Anything that could change which action is recommended (a new action added, any status
+  // change, or a manual pin) re-asks the same single source of truth rather than trying to
+  // predict the answer client-side.
+  const refreshNextBest = async () => {
+    try {
+      const response = await fetch("/api/actions/next-best");
+      const nextBest = response.ok ? ((await response.json()) as WaypointAction) : null;
+      setNextBestActionId(nextBest?.id ?? null);
+      setNextBestRationale(nextMoveRationaleText(nextBest));
+    } catch {
+      // Non-critical: the badge just keeps showing its last known state until the next
+      // mutation or page load succeeds in refreshing it.
+    }
+  };
 
   const handleCreate = async (values: CreateActionInput) => {
     setError(null);
@@ -37,6 +68,7 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
     const created = (await response.json()) as WaypointAction;
     setActions((current) => [created, ...current]);
     setIsCreating(false);
+    void refreshNextBest();
   };
 
   const handleStatusChange = async (actionId: string, status: ActionStatus) => {
@@ -52,6 +84,7 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
     const updated = (await response.json()) as WaypointAction;
     setActions((current) => current.map((a) => (a.id === actionId ? updated : a)));
     setReflectingActionId(status === "completed" ? actionId : null);
+    void refreshNextBest();
   };
 
   const handleAddReflection = async (actionId: string, whatHappened: string, learning: string) => {
@@ -77,6 +110,11 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
     setActions((current) =>
       current.map((a) => (a.id === actionId ? updated : { ...a, isNextBestAction: false })),
     );
+    // A manual pin always wins in the selector, so we can set this directly instead of
+    // round-tripping through refreshNextBest() - but we still need updated's rationale (empty for
+    // a pin, since NextBestActionSelector only writes a rationale for its own computed picks).
+    setNextBestActionId(updated.id);
+    setNextBestRationale(nextMoveRationaleText(updated));
   };
 
   return (
@@ -101,6 +139,8 @@ export function ActionsBoard({ initialActions }: { initialActions: WaypointActio
             <li key={action.id}>
               <ActionRow
                 action={action}
+                isNextBest={action.id === nextBestActionId}
+                nextBestRationale={action.id === nextBestActionId ? nextBestRationale : null}
                 onStatusChange={(status) => handleStatusChange(action.id, status)}
                 onSetNextBest={() => handleSetNextBest(action.id)}
                 isReflecting={action.id === reflectingActionId}

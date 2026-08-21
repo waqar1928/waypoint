@@ -7,6 +7,7 @@ import { getMyDream } from "@/lib/dream";
 import { getRecentJournalEntries, getRecentLearnings } from "@/lib/journal";
 import { getMyPlan, getMyMilestones } from "@/lib/plan";
 import { getNextBestAction, getMyActions } from "@/lib/actions";
+import { nextMoveRationaleText } from "@/lib/next-move";
 import { getMyExperiments } from "@/lib/experiments";
 import { getMyBusinessValidations } from "@/lib/business";
 import { getMyConversations } from "@/lib/coach";
@@ -14,6 +15,7 @@ import { getMyPosts } from "@/lib/community";
 import { getMyHelpRequests } from "@/lib/mentorship";
 import { JournalPanel } from "@/components/app/journal-panel";
 import { MilestonesPanel } from "@/components/app/milestones-panel";
+import { WeeklyProgressCard } from "@/components/app/weekly-progress-card";
 
 const arcStages = ["discover", "define", "validate", "plan", "act", "learn", "grow"] as const;
 const arcLabels: Record<(typeof arcStages)[number], string> = {
@@ -68,8 +70,15 @@ export default async function DashboardPage() {
             <h2 className="mt-2 font-display text-xl font-semibold text-ink-900">
               {nextBestAction.title}
             </h2>
-            {nextBestAction.description ? (
-              <p className="mt-1 text-sm text-ink-700">{nextBestAction.description}</p>
+            {/* nextMoveRationaleText is the single source of truth Dashboard and Dream Overview
+                both call for this - see its doc comment in lib/actions.ts for why this used to
+                be two independently-drifting JSX branches (this one showed the action's own
+                free-text `description`, usually empty, instead of the computed `rationale`). */}
+            {nextMoveRationaleText(nextBestAction) ? (
+              <p className="mt-1 text-sm text-ink-700">{nextMoveRationaleText(nextBestAction)}</p>
+            ) : null}
+            {nextBestAction.estimatedMinutes ? (
+              <p className="mt-2 text-xs text-ink-500">About {nextBestAction.estimatedMinutes} min</p>
             ) : null}
             <Link href="/app/actions" className={buttonClasses("primary", "mt-4 gap-2")}>
               Go to Actions
@@ -262,6 +271,15 @@ export default async function DashboardPage() {
           </p>
         ) : null}
       </Card>
+
+      {dream ? (
+        <WeeklyProgressCard
+          weeklyEntries={journalEntries.filter((e) => e.entryType === "weekly")}
+          actionsCompleted={actionsCompleted}
+          experimentsRun={experiments.length}
+          learningsCount={learnings.length}
+        />
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <MilestonesPanel initialMilestones={milestones} />
