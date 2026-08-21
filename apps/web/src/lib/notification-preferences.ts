@@ -5,6 +5,12 @@ export interface NotificationPreferences {
   emailProductUpdates: boolean;
   emailCoachNudges: boolean;
   emailCommunityActivity: boolean;
+  pushEnabled: boolean;
+  pushDetailedContent: boolean;
+  pushDailyReminderEnabled: boolean;
+  /** "HH:mm:ss" or null - see QuietHoursEvaluator on the backend for exact semantics. */
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences | null> {

@@ -100,6 +100,35 @@ else if (!builder.Environment.IsDevelopment())
         "Point it at a path backed by a persistent volume.");
 }
 
+// Same fail-fast shape as the DataProtection check above, for the same reason: a VAPID private
+// key that's silently missing outside Development would mean push notifications fail 100% of the
+// time in production with no obvious signal beyond delivery logs. In Development, running without
+// VAPID configured is allowed - ScheduledNotificationWorker checks this itself and simply doesn't
+// attempt any sends, so contributors aren't forced to generate a real keypair just to run the app.
+// This never generates a keypair itself (see docs/ENVIRONMENT_VARIABLES.md for the one-time
+// `npx web-push generate-vapid-keys`-equivalent step to run before a real production deploy) and
+// the private key must only ever arrive via environment variable / secrets store, never source
+// control or appsettings.*.json.
+var vapidSubject = builder.Configuration["Waypoint:Notifications:Push:VapidSubject"];
+var vapidPublicKey = builder.Configuration["Waypoint:Notifications:Push:VapidPublicKey"];
+var vapidPrivateKey = builder.Configuration["Waypoint:Notifications:Push:VapidPrivateKey"];
+var vapidFieldsSet = new[] { vapidSubject, vapidPublicKey, vapidPrivateKey }.Count(v => !string.IsNullOrWhiteSpace(v));
+if (vapidFieldsSet is > 0 and < 3)
+{
+    // Partial config is always a mistake, in every environment - fail loud immediately rather
+    // than let the worker silently treat itself as "not configured" when someone typo'd one
+    // variable name.
+    throw new InvalidOperationException(
+        "Waypoint:Notifications:Push:VapidSubject / VapidPublicKey / VapidPrivateKey must be set together, or not at all.");
+}
+else if (vapidFieldsSet == 0 && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "Waypoint:Notifications:Push:VapidSubject / VapidPublicKey / VapidPrivateKey must be set outside Development " +
+        "for push notifications to work. Generate a keypair once (e.g. `npx web-push generate-vapid-keys`) and store " +
+        "the private key as a secret, never in source control.");
+}
+
 // In-process only (not distributed) — sole current consumer is AnthropicAiService's prompt
 // template lookup, a single-instance dev/staging deployment. Revisit with a distributed cache
 // (Redis) if this ever runs multi-instance and needs cache coherency across processes.

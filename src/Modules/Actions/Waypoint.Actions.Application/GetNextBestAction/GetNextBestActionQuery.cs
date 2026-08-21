@@ -29,7 +29,7 @@ public sealed class GetNextBestActionQueryHandler(
         var pinned = await repository.GetNextBestActionAsync(dream.DreamId, cancellationToken);
         if (pinned is not null)
         {
-            return ActionDto.From(pinned, "You marked this as your next move.");
+            return ActionDto.From(pinned, NextBestActionSelector.PinnedRationale);
         }
 
         var openActions = await repository.GetForDreamAsync(dream.DreamId, statusFilter: null, cancellationToken);

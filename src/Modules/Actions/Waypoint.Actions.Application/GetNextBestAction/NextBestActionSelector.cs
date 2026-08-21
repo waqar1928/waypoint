@@ -18,6 +18,12 @@ namespace Waypoint.Actions.Application.GetNextBestAction;
 /// </summary>
 public static class NextBestActionSelector
 {
+    /// <summary>The one rationale string used whenever a manual pin (not this selector) is the
+    /// reason an action is "next" - shared so GetNextBestActionQueryHandler and
+    /// NextBestActionSummaryProvider (the P1 push-notification worker's read path) say the exact
+    /// same thing rather than each hardcoding their own copy.</summary>
+    public const string PinnedRationale = "You marked this as your next move.";
+
     public static (ActionItem Action, string Rationale)? SelectFrom(IReadOnlyList<ActionItem> actions, DateOnly today)
     {
         var candidates = actions.Where(a => a.Status is ActionStatus.NotStarted or ActionStatus.InProgress).ToList();

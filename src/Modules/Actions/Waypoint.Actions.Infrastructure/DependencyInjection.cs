@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<IActionsRepository, ActionsRepository>();
         services.AddScoped<IActionsSummaryProvider, ActionsSummaryProvider>();
+        services.AddScoped<INextBestActionSummaryProvider, NextBestActionSummaryProvider>();
         services.AddScoped<IStartupMigrator, ActionsStartupMigrator>();
 
         return services;

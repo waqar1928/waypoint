@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { NavRail } from "@/components/app/nav-rail";
 import { MobileTabBar } from "@/components/app/mobile-tab-bar";
 import { TopBar } from "@/components/app/top-bar";
+import { ServiceWorkerRegistration } from "@/components/app/service-worker-registration";
 
 // Defense-in-depth alongside robots.ts's Disallow: /app/ — a well-behaved crawler never requests
 // these paths at all, but this covers the case where a private URL gets linked from somewhere
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-paper">
+      <ServiceWorkerRegistration />
       <NavRail />
       <div className="flex flex-1 flex-col">
         <TopBar email={session.email} />

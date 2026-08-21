@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IStartupMigrator, UsersStartupMigrator>();
         services.AddScoped<IOnboardingStatusProvider, OnboardingStatusProvider>();
         services.AddScoped<IProfileSummaryProvider, ProfileSummaryProvider>();
+        services.AddScoped<IPushReminderAudienceProvider, PushReminderAudienceProvider>();
 
         return services;
     }

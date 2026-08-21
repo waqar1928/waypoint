@@ -49,6 +49,26 @@ namespace Waypoint.Users.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("email_product_updates");
 
+                    b.Property<bool>("PushDailyReminderEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("push_daily_reminder_enabled");
+
+                    b.Property<bool>("PushDetailedContent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("push_detailed_content");
+
+                    b.Property<bool>("PushEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("push_enabled");
+
+                    b.Property<TimeOnly?>("QuietHoursEnd")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_end");
+
+                    b.Property<TimeOnly?>("QuietHoursStart")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("quiet_hours_start");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");

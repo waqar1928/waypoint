@@ -163,6 +163,16 @@ export const notificationPreferencesSchema = z.object({
   emailProductUpdates: z.boolean(),
   emailCoachNudges: z.boolean(),
   emailCommunityActivity: z.boolean(),
+  // Push fields (P1) - pushEnabled is set via the dedicated Enable/Disable button's own immediate
+  // save (see PushNotificationSettings), not this form's Save button, but it still round-trips
+  // through this same shape since GET/PUT notification-preferences returns/accepts it either way.
+  pushEnabled: z.boolean(),
+  pushDetailedContent: z.boolean(),
+  pushDailyReminderEnabled: z.boolean(),
+  // "HH:mm:ss" (TimeOnly's default JSON shape) or null - both must be set together or both null,
+  // enforced server-side by UpdateNotificationPreferencesCommandValidator.
+  quietHoursStart: z.string().nullable(),
+  quietHoursEnd: z.string().nullable(),
 });
 export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;
 

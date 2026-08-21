@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Actions\Waypoint.Actions.Application\Waypoint.Actions.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Actions\Waypoint.Actions.Domain\Waypoint.Actions.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Actions\Waypoint.Actions.Infrastructure\Waypoint.Actions.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\Waypoint.Common\Waypoint.Common.csproj" />
   </ItemGroup>
 
