@@ -46,6 +46,7 @@ services:
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${POSTGRES_DB:?Set POSTGRES_DB in .env};Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
       Waypoint__WebAppBaseUrl: ${WEB_APP_BASE_URL:?Set WEB_APP_BASE_URL in .env, e.g. https://app.drevia.net}
       Waypoint__AutoMigrate: "true"
+      Waypoint__AdminEmails__0: ${ADMIN_EMAIL_0:-}
       Waypoint__DataProtection__KeysDirectory: /keys
       # Required outside Development - Program.cs throws at startup if these three aren't all set
       # together (see the fail-fast check mirroring DataProtection:KeysDirectory above). Generate
@@ -85,30 +86,16 @@ services:
     environment:
       API_BASE_URL: http://api:8080
     networks:
-      - edge
+      - web_proxy
       - backend
     depends_on:
       api:
         condition: service_started
     # No `ports:` entry — only reachable through the `caddy` reverse proxy on the `edge` network.
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - drevia_caddy_data:/data
-      - drevia_caddy_config:/config
-    networks:
-      - edge
-    depends_on:
-      - web
-
 networks:
-  edge:
+  web_proxy:
+    external: true
   backend:
   data:
     internal: true
@@ -116,5 +103,3 @@ networks:
 volumes:
   drevia_postgres_data:
   drevia_dataprotection_keys:
-  drevia_caddy_data:
-  drevia_caddy_config:

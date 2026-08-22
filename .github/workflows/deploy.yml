@@ -41,9 +41,37 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/apps/drevia
+
+            # ---- Preflight -------------------------------------------------
+            # Fail loudly rather than destroy unexpected VPS-local state. The
+            # previous version of this script ran `git reset --hard`, which
+            # silently discarded local modifications to tracked files — at one
+            # point that included an unrelated business's reverse-proxy vhost,
+            # whose loss would only have surfaced at the next Caddy restart.
+            # Shared infrastructure now lives outside this repo entirely (see
+            # docs/HOSTINGER_DEPLOYMENT.md), and these checks make any residual
+            # drift a hard stop instead of silent data loss.
+            test -d .git || { echo "::error::Not a git repository"; exit 1; }
+            test "$(git rev-parse --abbrev-ref HEAD)" = "main" || { echo "::error::Not on main"; exit 1; }
+            test -z "$(git status --porcelain --untracked-files=no)" || {
+              echo "::error::Unexpected tracked local drift — refusing to deploy."
+              git status --short
+              exit 1; }
+            test -f .env || { echo "::error::.env missing"; exit 1; }
+            for v in POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD WEB_APP_BASE_URL \
+                     VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY VAPID_SUBJECT; do
+              grep -qE "^${v}=.+" .env || { echo "::error::$v missing from .env"; exit 1; }
+            done
+            docker network inspect web_proxy >/dev/null 2>&1 || {
+              echo "::error::external network web_proxy missing — is the shared Caddy project up?"; exit 1; }
+
+            # ---- Deploy ----------------------------------------------------
+            # Fast-forward only: aborts on divergence instead of overwriting.
+            # This project deploys ONLY its own containers; it must never stop,
+            # restart, or reconfigure the shared Caddy proxy or any other app.
             git fetch origin main
             git checkout main
-            git reset --hard origin/main
+            git pull --ff-only origin main
             docker compose -f docker-compose.prod.yml up -d --build
             docker compose -f docker-compose.prod.yml ps
 
