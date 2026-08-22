@@ -116,13 +116,115 @@ now, do not run `npx web-push generate-vapid-keys` casually — see whether disa
 Notifications module's push wiring entirely is a better fit than shipping a made-up keypair; this
 guide assumes push notifications are wanted, since they're a shipped feature as of this release.
 
-## 8. Configure Docker Compose
+## 8. Configure Docker Compose and the shared reverse proxy
 
 `docker-compose.prod.yml` (already in the repo) is the file this deployment uses — it is
 deliberately separate from `docker-compose.yml` (local dev only; publishes Postgres/API ports and
-has no reverse proxy or HTTPS, neither of which belongs in production). Review it once:
+serves plain HTTP, neither of which belongs in production).
+
+### The reverse proxy lives outside this repo, on purpose
+
+This repo does **not** contain a Caddyfile and `docker-compose.prod.yml` does **not** define a
+Caddy service. Both used to, and that was a mistake worth understanding before you reproduce it:
+the VPS also serves an unrelated site, whose vhost had been hand-added to the Caddyfile *inside
+this repo's tracked tree*. The deploy workflow ran `git reset --hard`, which silently discards
+local edits to tracked files — so that config was one deploy away from deletion. Worse, Caddy only
+reads its config at startup, so nothing would have broken until the next restart, arbitrarily far
+from the deploy that caused it.
+
+Shared infrastructure therefore lives in its own Compose project, outside every application repo:
+
+```
+~/caddy/
+  docker-compose.yml     project name: caddy; owns ports 80/443 and the TLS volumes
+  Caddyfile              one line: import /etc/caddy/sites/*.caddy
+  sites/
+    drevia.caddy         this app's vhosts
+    <other>.caddy        one file per unrelated site
+```
+
+Each application attaches to a shared external network, `web_proxy`. No application repo can
+affect another's proxy config, and no application deploy can restart or reconfigure the proxy.
+
+Create the network once (it must exist before Step 9 — `docker-compose.prod.yml` declares it
+`external: true` and will refuse to start without it):
 
 ```bash
+docker network create web_proxy
+```
+
+Then create `~/caddy/docker-compose.yml`:
+
+```yaml
+name: caddy
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web_proxy
+networks:
+  web_proxy:
+    external: true
+volumes:
+  caddy_data:
+  caddy_config:
+```
+
+`~/caddy/Caddyfile` is a single line, so adding a site never means editing a shared file:
+
+```
+import /etc/caddy/sites/*.caddy
+```
+
+And `~/caddy/sites/drevia.caddy` — `web` is the service name from `docker-compose.prod.yml`,
+resolved by Docker DNS over `web_proxy`:
+
+```
+# Drevia
+drevia.net, www.drevia.net, app.drevia.net {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	reverse_proxy web:3000
+
+	encode gzip
+
+	log {
+		output stdout
+		format json
+	}
+}
+```
+
+Those response headers are set here rather than in the application because they belong to every
+response the origin serves, including error pages the Next.js server never sees. Don't drop them
+when adapting this for another site. Note `Strict-Transport-Security` instructs browsers to refuse
+plain HTTP for a full year — correct once TLS works, but don't enable it on a hostname whose
+certificate you haven't confirmed, since you cannot un-send it to browsers that cached it.
+
+Start it before the application:
+
+```bash
+cd ~/caddy && docker compose up -d
+```
+
+### Review the application config
+
+```bash
+cd /opt/apps/drevia
 docker compose -f docker-compose.prod.yml config
 ```
 
@@ -136,8 +238,10 @@ output anywhere).
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-First run builds the `api` and `web` images (several minutes), pulls `postgres:16-alpine` and
-`caddy:2-alpine`, and starts everything. Watch it come up:
+First run builds the `api` and `web` images (several minutes), pulls `postgres:16-alpine`, and
+starts everything. Caddy is **not** part of this project — it was started separately in Step 8 and
+keeps running across application deploys, which is the point: redeploying the app never restarts
+the proxy or interrupts TLS for any other site sharing it. Watch it come up:
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
@@ -174,7 +278,7 @@ may or may not be Hostinger itself, depending on where the domain is registered)
 | A | `app` | `<VPS_IP>` | `app.drevia.net`, the primary application URL |
 
 All three point at the same VPS IP — this is one Next.js app serving both the marketing pages and
-the authenticated app, not three separate deployments (see `deploy/caddy/Caddyfile`). If you use
+the authenticated app, not three separate deployments (see `~/caddy/sites/drevia.caddy`). If you use
 Hostinger's own DNS zone editor instead of an external one, the equivalent A records are created
 there.
 
@@ -186,11 +290,20 @@ server.
 
 ## 12. Configure HTTPS
 
-Nothing to do manually here beyond DNS being correct. `caddy:2-alpine` (already running as part of
-Step 9) requests and renews Let's Encrypt certificates automatically for every hostname listed in
-`deploy/caddy/Caddyfile`, the first time it sees a real request for that hostname with working DNS.
-Certificate state persists in the `drevia_caddy_data` named volume, so a container restart doesn't
-mean a re-issue.
+Nothing to do manually here beyond DNS being correct. The Caddy container (started in Step 8, in
+its own project) requests and renews Let's Encrypt certificates automatically for every hostname
+listed in `~/caddy/sites/*.caddy`, the first time it sees a real request for that hostname with
+working DNS.
+
+Certificate state persists in the `caddy_caddy_data` volume (Compose prefixes volume names with the
+project name, so the `caddy_data:` volume in a project named `caddy` becomes `caddy_caddy_data` —
+verify with `docker volume ls` rather than assuming). A container restart therefore doesn't mean a
+re-issue.
+
+That volume also holds the ACME account key, which is why it must be **copied, never moved or
+recreated**, if you ever relocate the proxy. Let's Encrypt enforces rate limits per hostname —
+losing this volume means re-issuing every certificate at once, and a busy VPS can exhaust the
+weekly limit and be left without working TLS for days.
 
 Confirm it worked:
 
@@ -346,15 +459,29 @@ guide's scope, same reasoning as DISASTER_RECOVERY.md's stance on managed Postgr
 
 ## 21. Update/redeploy procedure
 
+Prefer the GitHub Actions workflow (`.github/workflows/deploy.yml`, manual trigger only) — it runs
+the same commands plus preflight checks. To do it by hand:
+
 ```bash
 cd /opt/apps/drevia
-git pull origin main
+git pull --ff-only origin main
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+`--ff-only` is deliberate. The workflow previously ran `git reset --hard origin/main`, which
+silently discards local edits to tracked files — including, at one point, config for an unrelated
+site. `--ff-only` refuses and reports instead of destroying. If it refuses, something on the VPS
+diverged from `main`; investigate what and why before forcing past it.
+
+The workflow also refuses to deploy when `git status --porcelain --untracked-files=no` is non-empty.
+Uncommitted changes to tracked files on a production host mean the running config isn't the config
+in the repo, and no deploy should paper over that. Fix by committing the change upstream and
+pulling it, not by discarding it blindly.
+
 Compose only rebuilds and recreates containers whose image actually changed, so a deploy where
-only `apps/web` changed doesn't restart `postgres` or interrupt open database connections. Take a
-backup first (Step 19's script) if the deploy includes a migration, per Step 10.
+only `apps/web` changed doesn't restart `postgres` or interrupt open database connections. Caddy is
+in a different project entirely and is never touched by this command. Take a backup first (Step 19's
+script) if the deploy includes a migration, per Step 10.
 
 ## 22. Rollback procedure
 
@@ -365,11 +492,31 @@ git checkout <previous-good-commit>
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+This leaves the repo on a **detached HEAD**, which the deploy workflow's preflight deliberately
+rejects (it requires `main`). That is intended: while rolled back, automated deploys should fail
+loudly rather than quietly fast-forward you off a rollback you're still investigating. Return to
+`main` when the fix is ready, as described below.
+
 If the problem is data-level (a bad migration already ran, not just bad application code), rolling
 back the code does not undo the migration — restore from the most recent pre-deploy backup
 instead, per Step 19's restore procedure and DISASTER_RECOVERY.md's "Bad migration deployed" row.
 After rolling back code only (no data restore needed), return to `main`:
-`git checkout main && git pull`.
+`git checkout main && git pull --ff-only`.
+
+### Rolling back the reverse proxy
+
+The proxy is a separate concern with a separate rollback. It has its own Compose project and its own
+TLS volumes, so an application rollback never touches it — and vice versa. If a Caddy change breaks
+routing, edit the relevant file under `~/caddy/sites/` and reload:
+
+```bash
+cd ~/caddy
+docker compose exec caddy caddy validate --config /etc/caddy/Caddyfile   # check before applying
+docker compose restart caddy
+```
+
+Validate first. A syntax error means Caddy fails to start, which takes down every site it serves —
+not just the one you were editing.
 
 ---
 
