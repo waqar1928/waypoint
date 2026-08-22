@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -26,7 +28,7 @@ const description =
 export const metadata: Metadata = {
   // Required for Open Graph/Twitter's relative-URL resolution and for sitemap.ts/robots.ts's
   // absolute URLs.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3030"),
+  metadataBase: new URL(SITE_URL),
   title,
   description,
   // 1200x630 is the standard OG/Twitter card size — generated from the same compass mark used

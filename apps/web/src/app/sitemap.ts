@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3030";
+import { SITE_URL } from "@/lib/site-url";
 
 /**
  * Covers only genuinely public pages — deliberately does not include /app/*, /admin/*, or

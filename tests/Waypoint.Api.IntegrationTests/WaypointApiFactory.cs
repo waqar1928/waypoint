@@ -168,8 +168,11 @@ public sealed class WaypointApiFactory : WebApplicationFactory<Program>, IAsyncL
             // Building the container (not just starting it) is what actually talks to the Docker
             // daemon, so it has to be inside this try block too — done eagerly in a field
             // initializer, it would throw before this method ever got a chance to catch it.
-            var container = new PostgreSqlBuilder()
-                .WithImage("postgres:16-alpine")
+            // Image passed to the constructor rather than via .WithImage(): the parameterless
+            // constructor is obsolete as of Testcontainers 4.14 and is slated for removal.
+            // Kept pinned to the same tag docker-compose.yml uses, so tests exercise the same
+            // Postgres major version as dev and production.
+            var container = new PostgreSqlBuilder("postgres:16-alpine")
                 .WithDatabase("waypoint_test")
                 .WithUsername("waypoint")
                 .WithPassword("waypoint_test_password")
